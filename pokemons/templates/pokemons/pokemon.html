@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %} Pokedex {% endblock%}
+
+{% block content %}
+        <h1>{{ pokemon.name |upper }}</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                        <th>Base experience</th>
+                        <th>Height</th>
+                        <th>Weight</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ pokemon.id }}</td>
+                        <td>{{ pokemon.name }}</td>
+                        <td>{{ pokemon.base_experience }}</td>
+                        <td>{{ pokemon.height }}</td>
+                        <td>{{ pokemon.weight }}</td>
+                    </tr>
+                </tbody>
+            </table>
+  <a href="{% url 'home' %}">Back to Home</a>
+{% endblock%}

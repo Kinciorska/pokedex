@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %} Pokedex {% endblock%}
+
+{% block content %}
+  <h1>Home page</h1>
+    <p> Want to search fo a pokemon?</p>
+    <a href="{% url 'search_pokemon' %}">Search</a>
+    <h2>Pokemons</h2>
+    <ul>
+            {% for pokemon in pokemon_list %}
+                <li>
+                    <a href="{% url 'pokemons:pokemon_detail' pokemon.name %}">
+                        {{ pokemon.name }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+
+{% endblock%}
+
