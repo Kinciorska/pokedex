@@ -3,11 +3,44 @@
 {% block title %} Pokedex {% endblock%}
 
 {% block content %}
-  <h1>Home page</h1>
+
+  <div class="collapse navbar-collapse" id="navbarText">
+    <ul class="navbar-nav mr-auto">
+      {% if user.is_authenticated %}
+
+      <li class="nav-item">
+        <a class="nav-link" href="/logout">Logout</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Welcome, {{user.username}}</a>
+      </li>
+
+      {% else %}
+
+      <li class="nav-item">
+        <a class="nav-link" href="/login">Login</a>
+      </li>
+
+      {% endif %}
+    </ul>
+  </div>
+</nav>
+
+{% if messages %}
+<div id="msg">
+    <ul class="messages">
+    {% for message in messages %}
+    <li {% if message.tags %} class="{{ message.tags }}"{% endif %}> {{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+</div>
+
+<h1>Home page</h1>
     <p> Want to search fo a pokemon?</p>
     <a href="{% url 'search_pokemon' %}">Search</a>
     <h2>Pokemons</h2>
-    <ul>
+        <ul>
             {% for pokemon in pokemon_list %}
                 <li>
                     <a href="{% url 'pokemons:pokemon_detail' pokemon.name %}">

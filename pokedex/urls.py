@@ -18,11 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 
 from pokemons.views import SearchPokemonView
-from website.views import HomePageView
+from website.views import HomePageView, RegisterView, LoginView, LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', HomePageView.as_view(), name="home"),
+    path('register', RegisterView.as_view(), name="register"),
+    path('login', LoginView.as_view(), name="login"),
+    path('logout', LogoutView.as_view(), name="logout"),
     path('search/', SearchPokemonView.as_view(), name="search_pokemon"),
     path('pokemons/', include('pokemons.urls')),
 ]

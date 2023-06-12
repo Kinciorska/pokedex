@@ -40,7 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'pokemons',
     'website',
+    'crispy_forms',
+    'crispy_bootstrap5',
 ]
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 MIDDLEWARE = [
     'django.middleware.cache.UpdateCacheMiddleware',
@@ -140,6 +145,6 @@ CACHES = {
 
 CACHE_MIDDLEWARE_ALIAS = 'default'
 
-CACHE_MIDDLEWARE_SECONDS = 86400
+CACHE_MIDDLEWARE_SECONDS = 1
 
 CACHE_MIDDLEWARE_KEY_PREFIX = ''
