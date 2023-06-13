@@ -5,24 +5,22 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 
+from django.views.generic.base import TemplateView
+
 from .forms import NewUserForm
 
 
-class HomePageView(View):
+class HomePageView(TemplateView):
     template_name = 'website/home.html'
 
-    def get(self, request):
+    def get_context_data(self, **kwargs):
         pokemon_list_url = 'https://pokeapi.co/api/v2/pokemon/?limit=20'
         pokemon_list = requests.get(pokemon_list_url).json()
-        next_pokemons = pokemon_list['next']
-        print(next_pokemons)
-        previous_pokemons = pokemon_list['previous']
-        pokemon_list = pokemon_list['results']
-        context = {"pokemon_list": pokemon_list,
-                   "next_pokemons": next_pokemons,
-                   "previous_pokemons": previous_pokemons,
-                   }
-        return render(request, self.template_name, context)
+        context = super().get_context_data(**kwargs)
+        context["pokemon_list"] = pokemon_list['results']
+        context["next_pokemons"] = pokemon_list['next']
+        context["previous_pokemons"] = pokemon_list['previous']
+        return context
 
 
 class RegisterView(View):
@@ -45,6 +43,7 @@ class RegisterView(View):
             messages.error(request, "Unsuccessful registration - invalid information.")
             context = {"form": form}
             return render(request, self.template_name, context)
+
 
 class LoginView(View):
     template_name = 'website/login.html'
@@ -71,6 +70,7 @@ class LoginView(View):
             messages.error(request, "Invalid username or password")
             context = {"form": form}
             return render(request, self.template_name, context)
+
 
 class LogoutView(View):
 

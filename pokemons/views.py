@@ -1,6 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from urllib.parse import urljoin
 from django.views import View
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import FormView
 
 import requests
 
@@ -18,14 +20,14 @@ class PokemonView(View):
         return render(request, self.template_name, context)
 
 
-class SearchPokemonView(View):
+class SearchPokemonView(FormView):
     template_name = "pokemons/search.html"
     form_class = SearchPokemonForm
 
-    def get(self, request):
-        form = self.form_class
-        context = {"form": form}
-        return render(request, self.template_name, context)
+    def form_valid(self, form):
+        name = form.cleaned_data
+        name = name['id_or_name']
+        return super(name, self).form_valid(form)
 
     def post(self, request):
         form = self.form_class(request.POST)
