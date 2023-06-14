@@ -24,5 +24,12 @@
                     </tr>
                 </tbody>
             </table>
+    {% if user.is_authenticated %}
+        <form id="add_to_fav" method="post">
+        {{ form }}
+        {% csrf_token %}
+        <input type="submit" value="Add to favourites">
+        </form>
+      {% endif %}
   <a href="{% url 'home' %}">Back to Home</a>
 {% endblock%}

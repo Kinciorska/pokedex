@@ -3,10 +3,13 @@ from urllib.parse import urljoin
 from django.views import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormView
-
+from django.contrib.auth.decorators import login_required
 import requests
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
 
-from .forms import SearchPokemonForm
+from .forms import SearchPokemonForm, AddPokemonToFavourites
+from .models import FavouritePokemon
 
 
 class PokemonView(View):
@@ -18,6 +21,23 @@ class PokemonView(View):
         """The context is a dictionary mapping template variable names to Python objects."""
         context = {"pokemon": pokemon}
         return render(request, self.template_name, context)
+
+    @login_required(login_url="/website/login/")
+    def post(self, request, id_or_name, user_id):
+        form = AddPokemonToFavourites
+        model = FavouritePokemon
+        if form.is_valid():
+            pokemon_url = urljoin('https://pokeapi.co/api/v2/pokemon/', id_or_name)
+            pokemon = requests.get(pokemon_url).json()
+            name = pokemon["name"]
+            user = request.user
+            model.object.create(
+                name=name, user=user)
+            context = {"form": form}
+            return render(request, self.template_name, context)
+        else:
+            context = {"form": form}
+            return render(request, self.template_name, context)
 
 
 class SearchPokemonView(FormView):
