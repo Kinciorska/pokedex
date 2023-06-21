@@ -25,11 +25,13 @@
                 </tbody>
             </table>
     {% if user.is_authenticated %}
-        <form id="add_to_fav" method="post">
-        {{ form }}
-        {% csrf_token %}
-        <input type="submit" value="Add to favourites">
-        </form>
+
+            {% if is_favourite is False %}
+            <a href="{% url 'add_fav_pokemon' pokemon.name %}">Add to favourites</a>
+            {% else %}
+            <a href="{% url 'remove_fav_pokemon' pokemon.name %}">Remove from favourites</a>
+            {% endif %}
+
       {% endif %}
   <a href="{% url 'home' %}">Back to Home</a>
 {% endblock%}
