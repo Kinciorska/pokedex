@@ -8,7 +8,7 @@ class FavouritePokemon(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
-        verbose_plural_name = ""
+        verbose_name_plural = "FavouritePokemons"
 
     def __str__(self):
         return self.name
