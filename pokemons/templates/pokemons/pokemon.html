@@ -27,11 +27,37 @@
     {% if user.is_authenticated %}
 
             {% if is_favourite is False %}
-            <a href="{% url 'add_fav_pokemon' pokemon.name %}">Add to favourites</a>
+            <a href="{% url 'pokemons:add_fav_pokemon' pokemon.name %}">Add to favourites</a>
             {% else %}
-            <a href="{% url 'remove_fav_pokemon' pokemon.name %}">Remove from favourites</a>
+            <a href="{% url 'pokemons:remove_fav_pokemon' pokemon.name %}">Remove from favourites</a>
             {% endif %}
 
-      {% endif %}
+            {% if is_set_to_team is False %}
+            <a href="{% url 'pokemons:add_to_team' pokemon.name %}">Add to team</a>
+            {% else %}
+            <a href="{% url 'pokemons:remove_from_team' pokemon.name %}">Remove from team</a>
+            {% endif %}
+
+
+            {% if team_full is True %}
+            <p>You already have 6 pokemons in your team. Remove
+                <a href="{% url 'pokemons:pokemon_team' %}">one of them</a>
+                to add this pokemon to your team.</p>
+            {% endif %}
+
+    {% endif %}
+
+    {% if messages %}
+    <div id="msg">
+        <ul class="messages">
+        {% for message in messages %}
+        <li {% if message.tags %} class="{{ message.tags }}"{% endif %}> {{ message }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+        {% endif %}
+
+
+
   <a href="{% url 'home' %}">Back to Home</a>
 {% endblock%}

@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from pokemons.views import SearchPokemonView, AddFavouritePokemon, RemoveFavouritePokemon, FavouritePokemonView
+from pokemons.views import SearchPokemonView
 from website.views import HomePageView, RegisterView, LoginView, LogoutView
 
 urlpatterns = [
@@ -26,9 +26,5 @@ urlpatterns = [
     path('register', RegisterView.as_view(), name="register"),
     path('login', LoginView.as_view(), name="login"),
     path('logout', LogoutView.as_view(), name="logout"),
-    path('search/', SearchPokemonView.as_view(), name="search_pokemon"),
-    path('add_favourite/<id_or_name>/', AddFavouritePokemon.as_view(), name="add_fav_pokemon"),
-    path('remove_favourite/<id_or_name>/', RemoveFavouritePokemon.as_view(), name="remove_fav_pokemon"),
-    path('favourites/', FavouritePokemonView.as_view(), name="favourite_pokemon"),
     path('pokemons/', include('pokemons.urls')),
 ]
