@@ -25,6 +25,11 @@ class PokemonView(View):
             team_full = PokemonInTeam.objects.filter(user=user).count() == 6
             is_set_to_team = PokemonInTeam.objects.filter(name=id_or_name).exists()
 
+        else:
+            is_favourite = False
+            team_full = False
+            is_set_to_team = False
+
         context = {'pokemon': pokemon,
                    'is_favourite': is_favourite,
                    'team_full': team_full,
