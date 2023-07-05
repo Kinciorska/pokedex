@@ -5,19 +5,56 @@
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock%}</title>
     <link rel="stylesheet"
-        href="{% static 'website/style.css' %}">
+          href="{% static 'website/style.css' %}">
 </head>
 <body>
-    {% block content %}
 
-    <script>
+<div class="collapse navbar-collapse" id="navbarText">
+    <ul class="navbar-nav mr-auto">
+        {% if user.is_authenticated %}
+
+        <li class="nav-item">
+            <a class="nav-link" href="/logout">Logout</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Welcome, {{user.username}}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'pokemons:favourite_pokemon' %}">Favourite pokemons</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'pokemons:pokemon_team' %}">Pokemon team</a>
+        </li>
+
+        {% else %}
+
+        <li class="nav-item">
+            <a class="nav-link" href="/login">Login</a>
+        </li>
+
+        {% endif %}
+    </ul>
+</div>
+    <a href="{% url 'home' %}">Home</a>
+</nav>
+
+{% if messages %}
+<div id="msg">
+    <ul class="messages">
+        {% for message in messages %}
+        <li {% if message.tags %} class="{{ message.tags }}"{% endif %}> {{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+<script>
     var message_ele = document.getElementById("msg");
 
     setTimeout(function(){
     message_ele.style.display = "none";
     }, 3000);
     </script>
-
-    {% endblock%}
+{% block content %}
+{% endblock%}
 </body>
 </html>

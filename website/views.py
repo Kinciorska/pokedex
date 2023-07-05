@@ -1,4 +1,3 @@
-import requests
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib import messages
@@ -12,15 +11,6 @@ from .forms import NewUserForm
 
 class HomePageView(TemplateView):
     template_name = 'website/home.html'
-
-    def get_context_data(self, **kwargs):
-        pokemon_list_url = 'https://pokeapi.co/api/v2/pokemon/?limit=20'
-        pokemon_list = requests.get(pokemon_list_url).json()
-        context = super().get_context_data(**kwargs)
-        context["pokemon_list"] = pokemon_list['results']
-        context["next_pokemons"] = pokemon_list['next']
-        context["previous_pokemons"] = pokemon_list['previous']
-        return context
 
 
 class RegisterView(View):

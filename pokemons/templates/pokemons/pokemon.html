@@ -3,61 +3,76 @@
 {% block title %} Pokedex {% endblock%}
 
 {% block content %}
-        <h1>{{ pokemon.name |upper }}</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Name</th>
-                        <th>Base experience</th>
-                        <th>Height</th>
-                        <th>Weight</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ pokemon.id }}</td>
-                        <td>{{ pokemon.name }}</td>
-                        <td>{{ pokemon.base_experience }}</td>
-                        <td>{{ pokemon.height }}</td>
-                        <td>{{ pokemon.weight }}</td>
-                    </tr>
-                </tbody>
-            </table>
-    {% if user.is_authenticated %}
+<h1>{{ pokemon.name |upper }}</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Abilities</th>
+        <th>Moves</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>{{ pokemon.id }}</td>
+        <td>{{ pokemon.name }}</td>
+        <td>{% for types in pokemon_types_list %}
+            <li>
+                <a href="{% url 'pokemon_types:pokemon_type' types.type.name %}">{{ types.type.name }}</a>
+            </li>
+            {% endfor %}
+        </td>
+        <td>{% for abilities in pokemon_abilities_list %}
+            <li>
+                {{ abilities.ability.name }}
+            </li>
+            {% endfor %}
+        </td>
+        <td>{% for moves in pokemon_moves_list %}
+            <li>
+                {{ moves.move.name }}
+            </li>
+            {% endfor %}
+        </td>
+    </tr>
+    </tbody>
+</table>
+{% if user.is_authenticated %}
 
-            {% if is_favourite is False %}
-            <a href="{% url 'pokemons:add_fav_pokemon' pokemon.name %}">Add to favourites</a>
-            {% else %}
-            <a href="{% url 'pokemons:remove_fav_pokemon' pokemon.name %}">Remove from favourites</a>
-            {% endif %}
+{% if is_favourite is False %}
+<a href="{% url 'pokemons:add_fav_pokemon' pokemon.name %}">Add to favourites</a>
+{% else %}
+<a href="{% url 'pokemons:remove_fav_pokemon' pokemon.name %}">Remove from favourites</a>
+{% endif %}
 
-            {% if is_set_to_team is False %}
-            <a href="{% url 'pokemons:add_to_team' pokemon.name %}">Add to team</a>
-            {% else %}
-            <a href="{% url 'pokemons:remove_from_team' pokemon.name %}">Remove from team</a>
-            {% endif %}
+{% if is_set_to_team is False %}
+<a href="{% url 'pokemons:add_to_team' pokemon.name %}">Add to team</a>
+{% else %}
+<a href="{% url 'pokemons:remove_from_team' pokemon.name %}">Remove from team</a>
+{% endif %}
 
 
-            {% if team_full is True %}
-            <p>You already have 6 pokemons in your team. Remove
-                <a href="{% url 'pokemons:pokemon_team' %}">one of them</a>
-                to add this pokemon to your team.</p>
-            {% endif %}
+{% if team_full is True %}
+<p>You already have 6 pokemons in your team. Remove
+    <a href="{% url 'pokemons:pokemon_team' %}">one of them.</a>
+</p>
+{% endif %}
 
-    {% endif %}
+{% endif %}
 
-    {% if messages %}
-    <div id="msg">
-        <ul class="messages">
+{% if messages %}
+<div id="msg">
+    <ul class="messages">
         {% for message in messages %}
         <li {% if message.tags %} class="{{ message.tags }}"{% endif %}> {{ message }}</li>
         {% endfor %}
-        </ul>
-    </div>
-        {% endif %}
+    </ul>
+</div>
+{% endif %}
 
 
-
-  <a href="{% url 'home' %}">Back to Home</a>
+<a href="{% url 'pokemons:home' %}">All Pokemons</a>
+<a href="{% url 'home' %}">Back to Home</a>
 {% endblock%}

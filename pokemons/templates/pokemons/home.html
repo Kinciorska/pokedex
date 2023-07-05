@@ -1,19 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %} Favourite Pokemons {% endblock%}
+{% block title %} Pokedex {% endblock%}
 
 {% block content %}
-<body>
-<h1>Your favourite pokemons:</h1>
+<p> Want to search fo a pokemon?</p>
+<a href="{% url 'pokemons:search_pokemon' %}">Search</a>
+<h2>Pokemons</h2>
 <ul>
-    {% for pokemon in object_list %}
+    {% for pokemon in pokemon_list %}
     <li>
         <a href="{% url 'pokemons:pokemon_detail' pokemon.name %}">
             {{ pokemon.name }}
         </a>
     </li>
-    {% empty %}
-    <li>You didn't choose any pokemons yet.</li>
     {% endfor %}
 </ul>
 <a href="{% url 'home' %}">Back to Home</a>

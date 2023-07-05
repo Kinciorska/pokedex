@@ -4,33 +4,51 @@ from django.views import View
 from django.contrib import messages
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
+from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 import requests
 
-from .utils import POKE_API_ENDPOINT_POKEMON
+from .utils import POKE_API_ENDPOINT, POKEMON
 from .forms import SearchPokemonForm
 from .models import FavouritePokemon, PokemonInTeam
+
+
+class HomePageView(TemplateView):
+    template_name = 'pokemons/home.html'
+
+    def get_context_data(self, **kwargs):
+        pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=20')
+        pokemon_list = requests.get(pokemon_list_url).json()
+        context = super().get_context_data(**kwargs)
+        context["pokemon_list"] = pokemon_list['results']
+        context["next_pokemons"] = pokemon_list['next']
+        context["previous_pokemons"] = pokemon_list['previous']
+        return context
 
 
 class PokemonView(View):
     template_name = 'pokemons/pokemon.html'
 
     def get(self, request, id_or_name):
-        url = urljoin(POKE_API_ENDPOINT_POKEMON, id_or_name)
+        url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
         pokemon = requests.get(url).json()
+        pokemon_types_list = pokemon['types']
+        pokemon_abilities_list = pokemon['abilities']
+        pokemon_moves_list = pokemon['moves']
+        is_favourite = False
+        team_full = False
+        is_set_to_team = False
         if request.user.is_authenticated:
             user = request.user
             is_favourite = FavouritePokemon.objects.filter(name=id_or_name).exists()
             team_full = PokemonInTeam.objects.filter(user=user).count() == 6
             is_set_to_team = PokemonInTeam.objects.filter(name=id_or_name).exists()
 
-        else:
-            is_favourite = False
-            team_full = False
-            is_set_to_team = False
-
         context = {'pokemon': pokemon,
+                   'pokemon_types_list': pokemon_types_list,
+                   'pokemon_abilities_list': pokemon_abilities_list,
+                   'pokemon_moves_list': pokemon_moves_list,
                    'is_favourite': is_favourite,
                    'team_full': team_full,
                    'is_set_to_team': is_set_to_team,
