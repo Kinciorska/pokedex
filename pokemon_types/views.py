@@ -1,5 +1,3 @@
-from django.shortcuts import render
-from django.views import View
 from django.views.generic.base import TemplateView
 from urllib.parse import urljoin
 
@@ -19,12 +17,6 @@ class PokemonTypeView(TemplateView):
         context['type_name'] = pokemon_types['name']
         context['pokemons_in_type'] = pokemon_types['pokemon']
         context['moves_in_type'] = pokemon_types['moves']
-        print()
-        print(pokemon_types['moves'])
-        print()
-        print()
-        print(pokemon_types['damage_relations']['double_damage_from'])
-        print()
         context['double_damage_from'] = pokemon_types['damage_relations']['double_damage_from']
         context['double_damage_to'] = pokemon_types['damage_relations']['double_damage_to']
         context['half_damage_from'] = pokemon_types['damage_relations']['half_damage_from']
