@@ -28,4 +28,5 @@ urlpatterns = [
     path('logout', LogoutView.as_view(), name="logout"),
     path('pokemons/', include('pokemons.urls')),
     path('types/', include('pokemon_types.urls')),
+    path('moves/', include('pokemon_moves.urls')),
 ]

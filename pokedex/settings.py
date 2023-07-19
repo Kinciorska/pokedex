@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'pokemons',
     'website',
     'pokemon_types',
+    'pokemon_moves',
     'crispy_forms',
     'crispy_bootstrap5',
 ]

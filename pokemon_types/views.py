@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 import requests
 
 
-from .utils import POKE_API_ENDPOINT, TYPES
+from pokemons.utils import POKE_API_ENDPOINT, TYPES
 
 
 class PokemonTypeView(TemplateView):

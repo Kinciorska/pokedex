@@ -8,7 +8,6 @@
     <thead>
     <tr>
         <th>Id</th>
-        <th>Name</th>
         <th>Type</th>
         <th>Abilities</th>
         <th>Moves</th>
@@ -17,7 +16,6 @@
     <tbody>
     <tr>
         <td>{{ pokemon.id }}</td>
-        <td>{{ pokemon.name }}</td>
         <td>{% for types in pokemon_types_list %}
             <li>
                 <a href="{% url 'pokemon_types:pokemon_type' types.type.name %}">{{ types.type.name }}</a>
@@ -32,7 +30,7 @@
         </td>
         <td>{% for moves in pokemon_moves_list %}
             <li>
-                {{ moves.move.name }}
+                <a href="{% url 'pokemon_moves:move_details' moves.move.name %}">{{ moves.move.name }}</a>
             </li>
             {% endfor %}
         </td>

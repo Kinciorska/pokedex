@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %} Moves {% endblock%}
+
+{% block content %}
+
+<h1>{{ name |upper }}</h1>
+<table>
+    <thead>
+    <tr>
+        <th>ACCURACY</th>
+        <th>POWER</th>
+        <th>PP</th>
+        <th>TYPE</th>
+        <th>CLASS</th>
+        <th>FLAVOR TEXT</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>
+            <li> {{ accuracy }} </li>
+        </td>
+        <td>
+            <li> {{ power }} </li>
+        </td>
+        <td>
+            <li> {{ pp }} </li>
+        </td>
+        <td>
+            <li> {{ type.name }} </li>
+        </td>
+        <td>
+            <li> {{ class.name }} </li>
+        </td>
+        <td>
+            {% for entry in flavor_text_list %}
+                {% if entry.language.name == "en" %}
+                    <li>{{ entry.flavor_text }} {{ entry.version_group.name |upper }} </li>
+                {% endif %}
+            {% endfor %}
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<a href="{% url 'pokemon_moves:pokemon_moves' %}">All Moves</a>
+
+{% endblock%}

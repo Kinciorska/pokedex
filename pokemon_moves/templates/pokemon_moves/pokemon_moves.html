@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %} Moves {% endblock%}
+
+{% block content %}
+
+<h1>MOVES</h1>
+<ul>
+    {% for move in moves_list %}
+    <li>
+        <a href="{% url 'pokemon_moves:move_details' move.name %}">
+            {{ move.name }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock%}
