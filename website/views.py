@@ -3,10 +3,14 @@ from django.views import View
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User, Group
 
 from django.views.generic.base import TemplateView
+from rest_framework import viewsets
+from rest_framework import permissions
 
 from .forms import NewUserForm
+from .serializers import UserSerializer, GroupSerializer
 
 
 class HomePageView(TemplateView):
@@ -68,3 +72,16 @@ class LogoutView(View):
         logout(request)
         messages.info(request, "You have successfully logged out.")
         return redirect("home")
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
