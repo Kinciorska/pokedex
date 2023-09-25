@@ -6,11 +6,16 @@
 <body>
 <h1>Your favourite pokemons:</h1>
 <ul>
-    {% for pokemon in object_list %}
+    {% for pokemon in pokemons %}
     <li>
-        <a href="{% url 'pokemons:pokemon_detail' pokemon.name %}">
-            {{ pokemon.name }}
+        <a href="{% url 'pokemons:pokemon_detail' pokemon %}">
+            {{ pokemon.pokemon.pokemon_name }}
         </a>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="pokemon_id" value={{ pokemon.pokemon.pokemon_id }}>
+            <input type="submit" name="favourite_form" value="Remove from favourites">
+        </form>
     </li>
     {% empty %}
     <li>You didn't choose any pokemons yet.</li>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 
 {% block title %} Pokedex {% endblock%}
 
@@ -31,6 +32,9 @@
         <td>{% for moves in pokemon_moves_list %}
             <li>
                 <a href="{% url 'pokemon_moves:move_details' moves.move.name %}">{{ moves.move.name }}</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'pokemons:add_move' pokemon.id moves.move.name %}">Choose this move</a>
+                {% endif %}
             </li>
             {% endfor %}
         </td>
@@ -39,24 +43,29 @@
 </table>
 {% if user.is_authenticated %}
 
-{% if is_favourite is False %}
-<a href="{% url 'pokemons:add_fav_pokemon' pokemon.name %}">Add to favourites</a>
-{% else %}
-<a href="{% url 'pokemons:remove_fav_pokemon' pokemon.name %}">Remove from favourites</a>
-{% endif %}
+    {% if is_favourite is False %}
+    <form method="post">
+        {% csrf_token %}
+        {{ favourite_form }}
+        <input type="submit" name="favourite_form" value="Add to favourites">
+    </form>
+    {% else %}
+    <p>This pokemon is set as favourite</p>
+    {% endif %}
 
-{% if is_set_to_team is False %}
-<a href="{% url 'pokemons:add_to_team' pokemon.name %}">Add to team</a>
-{% else %}
-<a href="{% url 'pokemons:remove_from_team' pokemon.name %}">Remove from team</a>
-{% endif %}
+    {% if team_full is False %}
+    <form method="post">
+        {% csrf_token %}
+        {{ team_form }}
+        <input type="submit" name="team_form" value="Add to team">
+    </form>
+    {% endif %}
 
-
-{% if team_full is True %}
-<p>You already have 6 pokemons in your team. Remove
-    <a href="{% url 'pokemons:pokemon_team' %}">one of them.</a>
-</p>
-{% endif %}
+    {% if team_full is True %}
+    <p>You already have 6 pokemons in your team. Remove
+        <a href="{% url 'pokemons:pokemon_team' %}">one of them.</a>
+    </p>
+    {% endif %}
 
 {% endif %}
 
