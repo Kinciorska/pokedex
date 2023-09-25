@@ -7,8 +7,8 @@ import requests
 from pokemons.utils import POKE_API_ENDPOINT, TYPES
 
 
-class PokemonTypeView(TemplateView):
-    template_name = 'pokemon_types/pokemon_types.html'
+class PokemonTypeDetailView(TemplateView):
+    template_name = 'pokemon_types/type_details.html'
 
     def get_context_data(self, id_or_name, **kwargs):
         url = urljoin(POKE_API_ENDPOINT + TYPES, id_or_name)
@@ -24,3 +24,16 @@ class PokemonTypeView(TemplateView):
         context['no_damage_from'] = pokemon_types['damage_relations']['no_damage_from']
         context['no_damage_to'] = pokemon_types['damage_relations']['no_damage_to']
         return context
+
+
+class PokemonTypesView(TemplateView):
+    template_name = 'pokemon_types/pokemon_types.html'
+
+    def get_context_data(self, **kwargs):
+        url = urljoin(POKE_API_ENDPOINT, TYPES)
+        pokemon_types = requests.get(url).json()
+        print(pokemon_types)
+        context = super().get_context_data(**kwargs)
+        context['type_list'] = pokemon_types['results']
+        return context
+
