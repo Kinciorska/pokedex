@@ -1,6 +1,5 @@
 from django.db import models
-from django.db.models import CheckConstraint, Q, UniqueConstraint
-from django.core.exceptions import ValidationError
+from django.db.models import UniqueConstraint
 
 
 from django.contrib.auth.models import User
@@ -51,26 +50,4 @@ class Team(models.Model):
 
     def __str__(self):
         return str(self.id)
-
-
-# class Move(models.Model):
-#     move_name = models.CharField(max_length=200)
-#     move_type = models.CharField(max_length=200)
-#     move_number = models.IntegerField(unique=True)
-#     pokemon = models.ManyToManyField(Pokemon)
-#
-#
-#
-#     class Meta:
-#         verbose_name_plural = "Pokemons"
-#         constraints = [
-#             CheckConstraint(
-#                 check=Q(move_number__lt=4),
-#                 name='check_moves_number',
-#                 violation_error_message="You already chose 4 moves for this pokemon",
-#             ),
-#         ]
-#
-#     def __str__(self):
-#         return self.name
 

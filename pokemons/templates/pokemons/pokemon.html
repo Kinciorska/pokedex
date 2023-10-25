@@ -33,7 +33,22 @@
             <li>
                 <a href="{% url 'pokemon_moves:move_details' moves.move.name %}">{{ moves.move.name }}</a>
                 {% if user.is_authenticated %}
-                <a href="{% url 'pokemons:add_move' pokemon.id moves.move.name %}">Choose this move</a>
+                    {% if moves.move.name in move_names %}
+                        CHOSEN
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="move_name" value={{ moves.move.name }}>
+                            <input type="submit" name="remove_move_form" value="Remove this move">
+                        </form>
+                    {% endif %}
+                    <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="move_name" value={{ moves.move.name }}>
+                        {% if moves_full is False and moves.move.name not in move_names %}
+                            <input type="submit" name="add_move_form" value="Choose this move">
+                        {% endif %}
+                    </form>
+
                 {% endif %}
             </li>
             {% endfor %}

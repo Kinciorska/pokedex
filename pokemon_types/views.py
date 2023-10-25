@@ -32,7 +32,6 @@ class PokemonTypesView(TemplateView):
     def get_context_data(self, **kwargs):
         url = urljoin(POKE_API_ENDPOINT, TYPES)
         pokemon_types = requests.get(url).json()
-        print(pokemon_types)
         context = super().get_context_data(**kwargs)
         context['type_list'] = pokemon_types['results']
         return context

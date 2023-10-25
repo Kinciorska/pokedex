@@ -8,9 +8,11 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 import requests
 from django.views.generic import View
-from .utils import POKE_API_ENDPOINT, POKEMON
+from .utils import POKE_API_ENDPOINT, POKEMON, MOVES
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm
+from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
 from .models import FavouritePokemon, Team, Pokemon
+from pokemon_moves.models import PokemonMoves, Move
 
 
 class HomePageView(TemplateView):
@@ -52,17 +54,24 @@ class PokemonView(View):
                 pokemon_type_2=pokemon_type_2,
             )
             saved_pokemon = saved_pokemon[0]
+            pokemon_pk = getattr(saved_pokemon, 'id')
             is_favourite = FavouritePokemon.objects.filter(pokemon=saved_pokemon, user=user).exists()
             team_full = Team.objects.filter(user=user).count() == 6
+            moves_full = PokemonMoves.objects.filter(user=user,pokemon_id=pokemon_pk).count() == 4
+            move_names = get_moves_list(request, saved_pokemon)
 
         context = {'pokemon': pokemon,
                    'pokemon_types_list': pokemon_types_list,
                    'pokemon_abilities_list': pokemon_abilities_list,
                    'pokemon_moves_list': pokemon_moves_list,
+                   'move_names': move_names,
                    'is_favourite': is_favourite,
                    'team_full': team_full,
+                   'moves_full': moves_full,
                    'team_form': AddToTeamForm,
                    'favourite_form': AddToFavouritesForm,
+                   'add_move_form': AddMoveForm,
+                   'remove_move_form': RemoveMoveForm,
                    }
         return render(request, self.template_name, context)
 
@@ -90,21 +99,29 @@ class PokemonView(View):
             pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
             pokemon_in_team.pokemon_id.add(pokemon)
             return
-        # if Team.objects.filter(user=user).count() != 6:
-        #     for pokemon_counter in range(1, 7):
-        #         print(pokemon_counter)
-        #         if not Team.objects.filter(user=user, pokemon_number=pokemon_counter).exists():
-        #             pokemon_number = pokemon_counter
-        #             pokemon_in_team = Team(user=user, pokemon_number=pokemon_number)
-        #             pokemon_in_team.save()
-        #             pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
-        #             pokemon_in_team = Team.objects.get(user=user, pokemon_number=pokemon_counter)
-        #             pokemon_in_team.pokemon_id.add(pokemon)
-        #             if pokemon_counter == pokemon_number:
-        #                 break
-        #     return
         messages.error(request, "There are already 6 pokemons in your team")
         return
+
+    def get_move_number(self, request, pokemon):
+        user = request.user
+        existing_numbers = (PokemonMoves.objects.filter(user=user, pokemon=pokemon)).values_list('move_number', flat=True)
+        match existing_numbers.count():
+
+            case 0|1|2|3:
+                numbers = set(range(1, 5))
+                missing_number = list(numbers - set(existing_numbers))[0]
+                return missing_number
+            case 4:
+                messages.error(request, "There are already 6 pokemons in your team")
+                return
+
+    def get_move_details(self, move_name):
+        url = urljoin(POKE_API_ENDPOINT + MOVES, move_name)
+        move = requests.get(url).json()
+        id = move['id']
+        type = move['type']['name']
+        return id, type
+
     def post(self, request, id_or_name):
         query_dict = request.POST.dict()
         query = list(query_dict)
@@ -112,12 +129,12 @@ class PokemonView(View):
 
         match form:
 
-            case "team_form" if AddToTeamForm(request.POST).is_valid():
+            case 'team_form' if AddToTeamForm(request.POST).is_valid():
                 pokemon_id = get_pokemon_id(id_or_name)
                 self.save_in_team(request, pokemon_id)
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
-            case "favourite_form" if AddToTeamForm(request.POST).is_valid():
+            case 'favourite_form' if AddToTeamForm(request.POST).is_valid():
                 user = request.user
                 pokemon_id = get_pokemon_id(id_or_name)
                 pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
@@ -125,11 +142,47 @@ class PokemonView(View):
                 pokemon_in_favourites.save()
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
+            case 'add_move_form':
+                user = request.user
+                pokemon_id = get_pokemon_id(id_or_name)
+                pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+                move_name = request.POST['move_name']
+                move_details = self.get_move_details(move_name)
+                move_id = move_details[0]
+                move_type = move_details[1]
+                move = Move.objects.get_or_create(
+                    move_id=move_id,
+                    move_name=move_name,
+                    move_type=move_type,
+                )
+                move = move[0]
+                number = self.get_move_number(request, pokemon)
+                if PokemonMoves.objects.filter(user=user,pokemon=pokemon, move=move).exists():
+                    messages.error(request, "This move is already assigned to this pokemon")
+                    return
+                pokemon_move = PokemonMoves(user=user, move_number=number, pokemon=pokemon, move=move)
+                pokemon_move.save()
+                return redirect('pokemons:pokemon_detail', pokemon_id)
+
+            case 'remove_move_form':
+                user = request.user
+                pokemon_id = get_pokemon_id(id_or_name)
+                pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+                move_name = request.POST['move_name']
+                move = get_object_or_404(Move, move_name=move_name)
+                pokemon_move = PokemonMoves.objects.get(user=user, pokemon=pokemon, move=move)
+                pokemon_move.delete()
+                return redirect('pokemons:pokemon_detail', pokemon_id)
+
             case [_]:
                 team_form = AddToTeamForm(request.POST)
                 favourite_form = AddToTeamForm(request.POST)
+                add_move_form = AddMoveForm(request.POST)
+                remove_move_form = RemoveMoveForm(request.POST)
                 context = {'favourite_form': favourite_form,
                            'team_form': team_form,
+                           'add_move_form': add_move_form,
+                           'remove_move_form': remove_move_form,
                            }
                 return render(request, self.template_name, context)
 
@@ -139,6 +192,16 @@ def get_pokemon_id(id_or_name):
     pokemon_id = pokemon['id']
     return pokemon_id
 
+def get_moves_list(request, pokemon_pk):
+        user = request.user
+        move_numbers = PokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id', flat=True)
+        move_names_query = Move.objects.filter(pk__in=move_numbers).all()
+        move_names = []
+        for name in move_names_query:
+            name = str(name)
+            move_names.append(name)
+        return move_names
+
 
 class PokemonTeamView(View):
     template_name = 'pokemons/pokemon_team.html'
@@ -147,30 +210,73 @@ class PokemonTeamView(View):
     def get(self, request):
         user = request.user
         all_pokemons = (Team.objects.filter(user=user))
-        pokemon_number_list = []
-        pokemon_id_list = []
-        pokemon_name_list = []
-        pokemon_type_1_list = []
-        pokemon_type_2_list = []
-        for pokemon in all_pokemons:
-            pokemons_in_team = pokemon.pokemon_id.all().values()
-            pokemons_in_team = pokemons_in_team[0]
-            pokemon_id = pokemons_in_team['pokemon_id']
-            pokemon_id_list.append(pokemon_id)
-            pokemon_name = pokemons_in_team['pokemon_name']
-            pokemon_name_list.append(pokemon_name)
-            pokemon_type_1 = pokemons_in_team['pokemon_type_1']
-            pokemon_type_1_list.append(pokemon_type_1)
-            pokemon_type_2 = pokemons_in_team['pokemon_type_2']
-            pokemon_type_2_list.append(pokemon_type_2)
-            pokemon_number = pokemon.pokemon_number
-            pokemon_number_list.append(pokemon_number)
+        pokemon_number = all_pokemons.values_list('pokemon_number', flat=True)
+        pokemon_number_list = list(pokemon_number)
+        pokemon_pk = all_pokemons.values_list('pokemon_id', flat=True)
+        pokemon_pk_list = list(pokemon_pk)
+        pokemon_data = {'number': pokemon_number_list,
+                        'id': [],
+                        'name': [],
+                        'type_1': [],
+                        'type_2': [],
+                        'moves1': [],
+                        'moves2': [],
+                        'moves3': [],
+                        'moves4': [],
+                        }
+        for pk in pokemon_pk_list:
+            current_pokemon = Pokemon.objects.get(id=pk)
+            pokemon_id = getattr(current_pokemon, 'pokemon_id')
+            name = getattr(current_pokemon, 'pokemon_name')
+            type_1 = getattr(current_pokemon, 'pokemon_type_1')
+            type_2 = getattr(current_pokemon, 'pokemon_type_2')
+            moves = PokemonMoves.objects.filter(user=user, pokemon_id=pk).all()
+            moves_number = moves.values_list('move_number', flat=True)
+            moves_number = list(moves_number)
+            for number in moves_number:
+                match number:
+                    case 1:
+                        move1 = str(moves.get(move_number=1))
+                        pokemon_data['moves1'].append(move1)
+                    case 2:
+                        move2 = str(moves.get(move_number=2))
+                        pokemon_data['moves2'].append(move2)
+                    case 3:
+                        move3 = str(moves.get(move_number=3))
+                        pokemon_data['moves3'].append(move3)
+                    case 4:
+                        move4 = str(moves.get(move_number=4))
+                        pokemon_data['moves4'].append(move4)
+            numbers = set(range(1, 5))
+            missing_numbers = list(numbers - set(moves_number))
+            for number in missing_numbers:
+                match number:
+                    case 1:
+                        move1 = ""
+                        pokemon_data['moves1'].append(move1)
+                    case 2:
+                        move2 = ""
+                        pokemon_data['moves2'].append(move2)
+                    case 3:
+                        move3 = ""
+                        pokemon_data['moves3'].append(move3)
+                    case 4:
+                        move4 = ""
+                        pokemon_data['moves4'].append(move4)
+            pokemon_data['id'].append(pokemon_id)
+            pokemon_data['name'].append(name)
+            pokemon_data['type_1'].append(type_1)
+            pokemon_data['type_2'].append(type_2)
         context = {
-            'pokemon_number_list': pokemon_number_list,
-            'pokemon_id_list': pokemon_id_list,
-            'pokemon_name_list': pokemon_name_list,
-            'pokemon_type_1_list': pokemon_type_1_list,
-            'pokemon_type_2_list': pokemon_type_2_list,
+            'pokemon_number_list': pokemon_data['number'],
+            'pokemon_id_list': pokemon_data['id'],
+            'pokemon_name_list': pokemon_data['name'],
+            'pokemon_type_1_list': pokemon_data['type_1'],
+            'pokemon_type_2_list': pokemon_data['type_2'],
+            'pokemon_move1_list': pokemon_data['moves1'],
+            'pokemon_move2_list': pokemon_data['moves2'],
+            'pokemon_move3_list': pokemon_data['moves3'],
+            'pokemon_move4_list': pokemon_data['moves4'],
             'team_form': RemoveFromTeamForm,
             }
         return render(request, self.template_name, context)

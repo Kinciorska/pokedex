@@ -19,11 +19,13 @@ from django.urls import path, include
 from rest_framework import routers
 
 from website.views import HomePageView, RegisterView, LoginView, LogoutView, UserViewSet, GroupViewSet
+from pokemon_moves.views import MoveViewSet
 
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
+router.register(r'pokemon-moves', MoveViewSet)
 
 
 urlpatterns = [

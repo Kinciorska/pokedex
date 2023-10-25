@@ -16,8 +16,6 @@ urlpatterns = [
     path('pokemon/<id_or_name>/', PokemonView.as_view(), name='pokemon_detail'),
     path('search/', SearchPokemonView.as_view(), name='search_pokemon'),
     path('favourites/', FavouritePokemonView.as_view(), name='favourite_pokemon'),
-    # path('add_favourite/<pokemon_id>/', AddFavouritePokemonView.as_view(), name='add_fav_pokemon'),
-    # path('remove_favourite/<pokemon_id>/', RemoveFavouritePokemonView.as_view(), name='remove_fav_pokemon'),
     path('team/', PokemonTeamView.as_view(), name='pokemon_team'),
     path('add_move/<pokemon>/<str:move>/', AddMoveToPokemonView.as_view(), name='add_move'),
 ]
