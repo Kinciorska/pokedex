@@ -41,6 +41,9 @@ class PokemonView(View):
         pokemon_moves_list = pokemon['moves']
         is_favourite = False
         team_full = False
+        moves_full = False
+        move_names =[]
+
         if request.user.is_authenticated:
             user = request.user
             pokemon_data = self.get_pokemon_data(pokemon_id)

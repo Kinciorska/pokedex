@@ -9,6 +9,8 @@ db.sqlite3-journal
 media
 
 
+.idea
+
 ### Django.Python Stack ###
 # Byte-compiled / optimized / DLL files
 *.py[cod]
