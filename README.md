@@ -1,8 +1,6 @@
 # Pokedex App
 
-## Introduction
-
-This Python application is designed to make possible creating Pokemon teams, as well as assigning moves to pokemons.
+This Python application is designed to make possible creating Pokemon teams, as well as assigning moves to pokemons. The user can browse, compare and customize their team according to their strategy and preferences and choose their favorite Pokemon. 
 
 ## Features
 
@@ -13,15 +11,31 @@ This Python application is designed to make possible creating Pokemon teams, as 
 
 ## Getting Started
 
-### Prerequisites
+Follow these steps to build and run the app.
 
- **Python 3.10**: The app is built on Python, and Python 3.10 is required. 
+### Clone the repository:
 
- **Django 4.2**: The app utilizes the Django framework.
+   ```bash
+   git clone https://github.com/Kinciorska/pokedex.git
+   ```
 
- **PostgreSQL**: The app utilizes the DPostgreSQL database.
+### Build the Docker Image:
 
-
+The environment file should be located in ./.env directory.
+ 
+Build the Docker container using
+```
+docker-compose build
+```
+### Build the Docker Container:
+Run the Docker container using
+```
+docker-compose up -d
+```
+### Technologies
+- Django
+- PostgreSQL
+- Docker
 
 
 #### License
