@@ -21,17 +21,29 @@ Follow these steps to build and run the app.
 
 ### Build the Docker Image:
 
-The environment file should be located in ./.env directory.
+Needed environment files:
+
+- .django
+
+- .postgres
+
+Environment files should be located in .envs directory, examples of these environment files are available in the same directory.
  
 Build the Docker container using
 ```
 docker-compose build
 ```
 ### Build the Docker Container:
-Run the Docker container using
+Run the Docker container in the background using
 ```
 docker-compose up -d
 ```
+### Apply migrations:
+Apply Django migrations using
+```
+docker-compose run web python manage.py migrate
+```
+
 ### Technologies
 - Django
 - PostgreSQL
