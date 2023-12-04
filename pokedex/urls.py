@@ -20,13 +20,15 @@ from rest_framework import routers
 
 from website.views import HomePageView, RegisterView, LoginView, LogoutView, UserViewSet, GroupViewSet
 from pokemon_moves.views import MoveViewSet
+from pokemons.views import PokemonViewSet, TeamViewSet
 
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
 router.register(r'pokemon-moves', MoveViewSet)
-
+router.register(r'pokemon', PokemonViewSet, basename='pokemon-1')
+router.register(r'team', TeamViewSet, basename='team')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

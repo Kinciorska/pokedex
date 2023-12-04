@@ -6,13 +6,17 @@ from django.views.generic.list import ListView
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.db.models import Q
 import requests
 from django.views.generic import View
+from rest_framework import permissions, viewsets
+
 from .utils import POKE_API_ENDPOINT, POKEMON, MOVES
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm
 from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
 from .models import FavouritePokemon, Team, Pokemon
 from pokemon_moves.models import PokemonMoves, Move
+from .serializers import PokemonSerializer, TeamSerializer
 
 
 class HomePageView(TemplateView):
@@ -351,3 +355,33 @@ class AddMoveToPokemonView(View):
         else:
             messages.error(request, "You already chose 4 moves for this pokemon")
             return redirect('pokemons:pokemon_detail', pokemon)
+
+class PokemonViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows a pokemon to be viewed, filtered by their id or name.
+    """
+    queryset = Pokemon.objects.all()
+    serializer_class = PokemonSerializer
+    permission_classes = [permissions.AllowAny]
+
+    # def get_queryset(self):
+    #     id_or_name = self.kwargs['id_or_name']
+    #     return Pokemon.objects.filter((Q(pokemon_id=id_or_name) | Q(pokemon_name=id_or_name)))
+
+
+class TeamViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows the pokemon team to be viewed or edited.
+    """
+    serializer_class = TeamSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the pokemons
+        in the current team of the user.
+        """
+        user = self.request.user
+        pokemon_team = Team.objects.filter(user=user)
+        return pokemon_team
+

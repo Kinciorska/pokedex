@@ -29,19 +29,6 @@ class MovesView(TemplateView):
 class MoveDetailView(TemplateView):
     template_name = 'pokemon_moves/move_detail.html'
 
-    # def get_context_data(self, id_or_name, **kwargs):
-    #     url = urljoin(POKE_API_ENDPOINT + MOVES, id_or_name)
-    #     pokemon_move = requests.get(url).json()
-    #     context = super().get_context_data(**kwargs)
-    #     context['name'] = pokemon_move['name']
-    #     context['accuracy'] = pokemon_move['accuracy']
-    #     context['power'] = pokemon_move['power']
-    #     context['pp'] = pokemon_move['pp']
-    #     context['type'] = pokemon_move['type']
-    #     context['class'] = pokemon_move['damage_class']
-    #     context['flavor_text_list'] = pokemon_move['flavor_text_entries']
-    #     return context
-    #
     def get(self, request, id_or_name):
         url = urljoin(POKE_API_ENDPOINT + MOVES, id_or_name)
         pokemon_move = requests.get(url).json()
@@ -72,9 +59,12 @@ class MoveDetailView(TemplateView):
 
 
 class MoveViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows moves to be viewed.
+    """
     queryset = Move.objects.all()
     serializer_class = MoveSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
 class PokemonMovesList(APIView):
     def get(self, request, format=None):
