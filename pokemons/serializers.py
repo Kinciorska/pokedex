@@ -9,9 +9,9 @@ class PokemonSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
+    pokemon_id = PokemonSerializer(read_only=True, many=True)
     class Meta:
         model = Team
-        # fields = ['user', 'pokemon_id', 'pokemon_number']
-        fields = ['pokemon_number']
+        fields = ['pokemon_number', 'pokemon_id']
         depth = 1
 
