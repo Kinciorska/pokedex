@@ -16,7 +16,7 @@ from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFa
 from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
 from .models import FavouritePokemon, Team, Pokemon
 from pokemon_moves.models import PokemonMoves, Move
-from .serializers import PokemonSerializer, TeamSerializer
+from .serializers import PokemonSerializer, TeamSerializer, FavouritePokemonSerializer
 
 
 class HomePageView(TemplateView):
@@ -385,3 +385,18 @@ class TeamViewSet(viewsets.ModelViewSet):
         pokemon_team = Team.objects.filter(user=user)
         return pokemon_team
 
+class FavouritePokemonViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows to view pokemomons set as favourite.
+    """
+    serializer_class = FavouritePokemonSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the pokemons set as
+        favourites by the user.
+        """
+        user = self.request.user
+        favourite_pokemons = FavouritePokemon.objects.filter(user=user)
+        return favourite_pokemons
