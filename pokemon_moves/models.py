@@ -1,8 +1,9 @@
 from django.db import models
 from django.db.models import UniqueConstraint
-
 from django.contrib.auth.models import User
+
 from pokemons.models import Pokemon
+from pokemons.queryset import PokemonInTeamQuerySet
 
 
 class Move(models.Model):
@@ -20,12 +21,14 @@ class PokemonMoves(models.Model):
     pokemon = models.ForeignKey(Pokemon, on_delete=models.CASCADE)
     move = models.ForeignKey(Move, on_delete=models.CASCADE)
 
+    objects = PokemonInTeamQuerySet.as_manager()
+
 
     class Meta:
         ordering = ['move_number']
         constraints = [
             UniqueConstraint(
-                fields=['pokemon', 'move_number'],
+                fields=['pokemon', 'move_number', 'user'],
                 name='4_moves',
                 violation_error_message="There are already 4 moves assigned to this pokemon", ),
             ]

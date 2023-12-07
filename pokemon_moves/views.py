@@ -1,8 +1,10 @@
 from django.views.generic.base import TemplateView
 from urllib.parse import urljoin
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
+from rest_framework.decorators import action
 from django.shortcuts import render, redirect, get_object_or_404
 
 
@@ -10,7 +12,9 @@ import requests
 
 
 from pokemon_moves.models import Move, PokemonMoves
-from pokemon_moves.serializers import MoveSerializer, PokemonMovesSerializer
+from pokemons.models import Team
+from pokemon_moves.serializers import MoveSerializer
+from pokemons.serializers import PokemonMovesSerializer, TeamSerializer
 
 from pokemons.utils import POKE_API_ENDPOINT, MOVES
 
@@ -60,15 +64,27 @@ class MoveDetailView(TemplateView):
 
 class MoveViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows moves to be viewed.
+    API endpoint that allows all moves to be viewed.
+    """
+    queryset = Move.objects.all()
+    serializer_class = MoveSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class PokemonMoveViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows moves which are assigned to Pokémon to be viewed.
     """
     queryset = Move.objects.all()
     serializer_class = MoveSerializer
     permission_classes = [permissions.AllowAny]
 
 class PokemonMovesList(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request, format=None):
         user = request.user
         pokemon_moves = PokemonMoves.objects.filter(user=user)
-        serializer = PokemonMovesSerializer
-        return Response(serializer.data)
+        serialized_pokemon_moves = PokemonMovesSerializer(pokemon_moves, many=True)
+        return Response(serialized_pokemon_moves.data)
+

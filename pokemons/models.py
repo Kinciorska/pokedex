@@ -1,7 +1,6 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 
-
 from django.contrib.auth.models import User
 
 
@@ -50,4 +49,3 @@ class Team(models.Model):
 
     def __str__(self):
         return str(self.id)
-

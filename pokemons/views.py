@@ -10,13 +10,17 @@ from django.db.models import Q
 import requests
 from django.views.generic import View
 from rest_framework import permissions, viewsets
+from rest_framework.response import Response
+from rest_framework.generics import ListAPIView
+from itertools import chain
 
 from .utils import POKE_API_ENDPOINT, POKEMON, MOVES
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm
 from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
 from .models import FavouritePokemon, Team, Pokemon
 from pokemon_moves.models import PokemonMoves, Move
-from .serializers import PokemonSerializer, TeamSerializer, FavouritePokemonSerializer
+from .serializers import *
+from .queryset import PokemonInTeamQuerySet
 
 
 class HomePageView(TemplateView):
@@ -364,26 +368,25 @@ class PokemonViewSet(viewsets.ModelViewSet):
     serializer_class = PokemonSerializer
     permission_classes = [permissions.AllowAny]
 
-    # def get_queryset(self):
-    #     id_or_name = self.kwargs['id_or_name']
-    #     return Pokemon.objects.filter((Q(pokemon_id=id_or_name) | Q(pokemon_name=id_or_name)))
+# class TeamViewSet(viewsets.ModelViewSet):
+#     """
+#     API endpoint that allows the pokemon team to be viewed or edited.
+#     """
+#     serializer_class = AdvancedTeamSerializer
+#     serializer_class = TeamSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#
+#     def get_queryset(self):
+#         """
+#         This view should return a list of all the pokemons
+#         in the current team of the user.
+#         """
+#         user = self.request.user
+#         pokemon_team = Team.objects.filter(user=user)
+#         pokemon_moves = PokemonMoves.objects.filter(user=user)
+#         output = list(chain(pokemon_team, pokemon_moves))
+#         return output
 
-
-class TeamViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows the pokemon team to be viewed or edited.
-    """
-    serializer_class = TeamSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        """
-        This view should return a list of all the pokemons
-        in the current team of the user.
-        """
-        user = self.request.user
-        pokemon_team = Team.objects.filter(user=user)
-        return pokemon_team
 
 class FavouritePokemonViewSet(viewsets.ModelViewSet):
     """
@@ -400,3 +403,25 @@ class FavouritePokemonViewSet(viewsets.ModelViewSet):
         user = self.request.user
         favourite_pokemons = FavouritePokemon.objects.filter(user=user)
         return favourite_pokemons
+
+
+class TeamMovesList(ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class_Team = TeamSerializer
+    serializer_class_PokemonMove = PokemonMovesSerializer
+
+    def get_queryset_Team(self, user):
+        return Team.objects.filter(user=user)
+
+    def get_queryset_PokemonMove(self, user):
+        return PokemonMoves.objects.in_team(user).filter(user=user)
+
+    def list(self, request, *args, **kwargs):
+        user = self.request.user
+        team = self.serializer_class_Team(self.get_queryset_Team(user), many=True)
+        move = self.serializer_class_PokemonMove(self.get_queryset_PokemonMove(user), many=True)
+        return Response(
+            {'Team': team.data,
+             'Pokemon moves:': move.data
+             }
+        )
