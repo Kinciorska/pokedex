@@ -362,7 +362,7 @@ class AddMoveToPokemonView(View):
 
 class PokemonViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows a pokemon to be viewed, filtered by their id or name.
+    API endpoint that allows a Pokémon to be viewed.
     """
     queryset = Pokemon.objects.all()
     serializer_class = PokemonSerializer
@@ -390,14 +390,14 @@ class PokemonViewSet(viewsets.ModelViewSet):
 
 class FavouritePokemonViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows to view pokemomons set as favourite.
+    API endpoint that allows to view Pokémon set as favourite.
     """
     serializer_class = FavouritePokemonSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """
-        This view should return a list of all the pokemons set as
+        This view should return a list of all the Pokémon set as
         favourites by the user.
         """
         user = self.request.user
@@ -406,14 +406,23 @@ class FavouritePokemonViewSet(viewsets.ModelViewSet):
 
 
 class TeamMovesList(ListAPIView):
+    """
+    API endpoint that allows to view the Pokémon added to the team, and their assigned moves.
+    """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class_Team = TeamSerializer
     serializer_class_PokemonMove = PokemonMovesSerializer
 
     def get_queryset_Team(self, user):
+        """
+        This queryset should return a list of all the Pokémon in the team of the user.
+        """
         return Team.objects.filter(user=user)
 
     def get_queryset_PokemonMove(self, user):
+        """
+        This queryset should return a list of all the moves of Pokémon in the team of the user.
+        """
         return PokemonMoves.objects.in_team(user).filter(user=user)
 
     def list(self, request, *args, **kwargs):

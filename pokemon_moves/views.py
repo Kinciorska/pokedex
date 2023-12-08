@@ -71,18 +71,16 @@ class MoveViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class PokemonMoveViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows moves which are assigned to Pokémon to be viewed.
-    """
-    queryset = Move.objects.all()
-    serializer_class = MoveSerializer
-    permission_classes = [permissions.AllowAny]
-
 class PokemonMovesList(APIView):
+    """
+    API endpoint that allows to view the Pokémon and their assigned moves.
+    """
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, format=None):
+        """
+        This view should return a list of all the Pokémon and their moves, filtered by the current user.
+        """
         user = request.user
         pokemon_moves = PokemonMoves.objects.filter(user=user)
         serialized_pokemon_moves = PokemonMovesSerializer(pokemon_moves, many=True)
