@@ -368,25 +368,6 @@ class PokemonViewSet(viewsets.ModelViewSet):
     serializer_class = PokemonSerializer
     permission_classes = [permissions.AllowAny]
 
-# class TeamViewSet(viewsets.ModelViewSet):
-#     """
-#     API endpoint that allows the pokemon team to be viewed or edited.
-#     """
-#     serializer_class = AdvancedTeamSerializer
-#     serializer_class = TeamSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-#
-#     def get_queryset(self):
-#         """
-#         This view should return a list of all the pokemons
-#         in the current team of the user.
-#         """
-#         user = self.request.user
-#         pokemon_team = Team.objects.filter(user=user)
-#         pokemon_moves = PokemonMoves.objects.filter(user=user)
-#         output = list(chain(pokemon_team, pokemon_moves))
-#         return output
-
 
 class FavouritePokemonViewSet(viewsets.ModelViewSet):
     """

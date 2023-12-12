@@ -26,8 +26,8 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
 router.register(r'moves', MoveViewSet)
-router.register(r'pokemon', PokemonViewSet, basename='pokemon')
-router.register(r'favourite', FavouritePokemonViewSet, basename='favourite')
+router.register(r'pokemon', PokemonViewSet, basename='pokemon_list')
+router.register(r'favourite', FavouritePokemonViewSet, basename='favourite_list')
 
 
 urlpatterns = [
@@ -41,6 +41,6 @@ urlpatterns = [
     path('pokemons/', include('pokemons.urls')),
     path('types/', include('pokemon_types.urls')),
     path('pokemon_moves/', include('pokemon_moves.urls')),
-    path('pokemon_moves_list', PokemonMovesList.as_view()),
-    path('team_moves_list', TeamMovesList.as_view()),
+    path('pokemon_moves_list/', PokemonMovesList.as_view(), name="pokemon_moves"),
+    path('team/', TeamMovesList.as_view(), name="team"),
 ]
