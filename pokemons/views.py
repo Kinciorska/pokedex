@@ -1,39 +1,41 @@
+import requests
+
 from django.shortcuts import render, redirect, get_object_or_404
-from urllib.parse import urljoin
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
-from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.db.models import Q
-import requests
 from django.views.generic import View
+
 from rest_framework import permissions, viewsets
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
-from itertools import chain
 
-from .utils import POKE_API_ENDPOINT, POKEMON, MOVES
+from urllib.parse import urljoin
+
+from .utils import POKE_API_ENDPOINT, POKEMON, MOVES, pokemon_images
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm
 from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
-from .models import FavouritePokemon, Team, Pokemon
 from pokemon_moves.models import PokemonMoves, Move
 from .serializers import *
-from .queryset import PokemonInTeamQuerySet
 
 
-class HomePageView(TemplateView):
+class HomePageView(ListView):
     template_name = 'pokemons/home.html'
+    paginate_by = 20
 
-    def get_context_data(self, **kwargs):
-        pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=20')
-        pokemon_list = requests.get(pokemon_list_url).json()
-        context = super().get_context_data(**kwargs)
-        context["pokemon_list"] = pokemon_list['results']
-        context["next_pokemons"] = pokemon_list['next']
-        context["previous_pokemons"] = pokemon_list['previous']
-        return context
+    def get(self, request):
+        pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=100000')
+        pokemon_list_json = requests.get(pokemon_list_url).json()
+        pokemon_list = pokemon_list_json['results']
+        pokemon_paginator = Paginator(pokemon_list, self.paginate_by)
+        page_number = request.GET.get("page")
+        page_obj = pokemon_paginator.get_page(page_number)
+        return render(request, self.template_name, {"page_obj": page_obj})
+
 
 
 class PokemonView(View):
@@ -410,8 +412,33 @@ class TeamMovesList(ListAPIView):
         user = self.request.user
         team = self.serializer_class_Team(self.get_queryset_Team(user), many=True)
         move = self.serializer_class_PokemonMove(self.get_queryset_PokemonMove(user), many=True)
-        return Response(
-            {'Team': team.data,
-             'Pokemon moves:': move.data
-             }
-        )
+        data = {'Team': team.data,
+                'Pokemon moves:': move.data
+                }
+        return Response(data)
+
+
+class PokemonDetail(APIView):
+    """
+        API endpoint that retrieves pokemon data from the PokeAPI.
+        """
+    def get(self, request, pokemon_name):
+        url = urljoin(POKE_API_ENDPOINT + POKEMON, pokemon_name)
+        pokemon_data = requests.get(url).json()
+        pokemon_id = pokemon_data['id']
+        pokemon_types_list = pokemon_data['types']
+        pokemon_abilities_list = pokemon_data['abilities']
+        pokemon_moves_list = pokemon_data['moves']
+        pokemon_img = pokemon_data['sprites']['other']['official-artwork']['front_default']
+        data = {'pokemon_name': pokemon_name,
+                'pokemon_id':pokemon_id,
+                'pokemon_types_list': pokemon_types_list,
+                'pokemon_abilities_list': pokemon_abilities_list,
+                'pokemon_moves_list': pokemon_moves_list,
+                'pokemon_img': pokemon_img
+                }
+        return Response(data)
+
+
+
+

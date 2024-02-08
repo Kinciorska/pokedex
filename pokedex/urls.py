@@ -20,7 +20,7 @@ from rest_framework import routers
 
 from website.views import HomePageView, RegisterView, LoginView, LogoutView, UserViewSet, GroupViewSet
 from pokemon_moves.views import MoveViewSet, PokemonMovesList
-from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList
+from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList, PokemonDetail
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -32,15 +32,16 @@ router.register(r'favourite', FavouritePokemonViewSet, basename='favourite_list'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('home', HomePageView.as_view(), name="home"),
-    path('register', RegisterView.as_view(), name="register"),
-    path('login', LoginView.as_view(), name="login"),
-    path('logout', LogoutView.as_view(), name="logout"),
+    path('home', HomePageView.as_view(), name='home'),
+    path('register', RegisterView.as_view(), name='register'),
+    path('login', LoginView.as_view(), name='login'),
+    path('logout', LogoutView.as_view(), name='logout'),
     path('', include(router.urls)),
     path('-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('pokemons/', include('pokemons.urls')),
     path('types/', include('pokemon_types.urls')),
     path('pokemon_moves/', include('pokemon_moves.urls')),
-    path('pokemon_moves_list/', PokemonMovesList.as_view(), name="pokemon_moves"),
-    path('team/', TeamMovesList.as_view(), name="team"),
+    path('pokemon_moves_list/', PokemonMovesList.as_view(), name='pokemon_moves'),
+    path('team/', TeamMovesList.as_view(), name='team'),
+    path('pokemon_detail/<pokemon_name>/', PokemonDetail.as_view(), name='pokemon_detail')
 ]
