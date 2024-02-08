@@ -430,12 +430,14 @@ class PokemonDetail(APIView):
         pokemon_abilities_list = pokemon_data['abilities']
         pokemon_moves_list = pokemon_data['moves']
         pokemon_img = pokemon_data['sprites']['other']['official-artwork']['front_default']
+        pokemon_img_shiny = pokemon_data['sprites']['other']['official-artwork']['front_shiny']
         data = {'pokemon_name': pokemon_name,
                 'pokemon_id':pokemon_id,
                 'pokemon_types_list': pokemon_types_list,
                 'pokemon_abilities_list': pokemon_abilities_list,
                 'pokemon_moves_list': pokemon_moves_list,
-                'pokemon_img': pokemon_img
+                'pokemon_img': pokemon_img,
+                'pokemon_img_shiny': pokemon_img_shiny
                 }
         return Response(data)
 
