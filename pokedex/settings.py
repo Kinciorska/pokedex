@@ -46,12 +46,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'crispy_forms',
+    'crispy_bootstrap5',
     'pokemons',
     'website',
     'pokemon_types',
     'pokemon_moves',
-    'crispy_forms',
-    'crispy_bootstrap5',
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'

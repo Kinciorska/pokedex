@@ -16,7 +16,7 @@ from rest_framework.generics import ListAPIView
 
 from urllib.parse import urljoin
 
-from .utils import POKE_API_ENDPOINT, POKEMON, MOVES, pokemon_images
+from .utils import POKE_API_ENDPOINT, POKEMON, MOVES, POKEMON_SPECIES
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm
 from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
 from pokemon_moves.models import PokemonMoves, Move
@@ -423,8 +423,11 @@ class PokemonDetail(APIView):
         API endpoint that retrieves pokemon data from the PokeAPI.
         """
     def get(self, request, pokemon_name):
-        url = urljoin(POKE_API_ENDPOINT + POKEMON, pokemon_name)
-        pokemon_data = requests.get(url).json()
+        pokemon_url = urljoin(POKE_API_ENDPOINT + POKEMON, pokemon_name)
+        pokemon_species_url = urljoin(POKE_API_ENDPOINT + POKEMON_SPECIES, pokemon_name)
+        data = requests.get(pokemon_species_url).json()
+        flavor_text = data['flavor_text_entries'][0]['flavor_text']
+        pokemon_data = requests.get(pokemon_url).json()
         pokemon_id = pokemon_data['id']
         pokemon_types_list = pokemon_data['types']
         pokemon_abilities_list = pokemon_data['abilities']
@@ -437,7 +440,8 @@ class PokemonDetail(APIView):
                 'pokemon_abilities_list': pokemon_abilities_list,
                 'pokemon_moves_list': pokemon_moves_list,
                 'pokemon_img': pokemon_img,
-                'pokemon_img_shiny': pokemon_img_shiny
+                'pokemon_img_shiny': pokemon_img_shiny,
+                'pokemon_entry': flavor_text,
                 }
         return Response(data)
 

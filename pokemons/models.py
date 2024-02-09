@@ -7,8 +7,13 @@ from django.contrib.auth.models import User
 class Pokemon(models.Model):
     pokemon_id = models.IntegerField(unique=True)
     pokemon_name = models.CharField(max_length=200, unique=True)
+    pokemon_height = models.IntegerField()
+    pokemon_weight = models.IntegerField()
+    pokemon_img = models.CharField(max_length=200)
+    pokemon_img_shiny = models.CharField(max_length=200)
     pokemon_type_1 = models.CharField(max_length=200)
     pokemon_type_2 = models.CharField(max_length=200, blank=True, default='')
+    pokemon_entry = models.CharField(max_length=1000, blank=True, default='')
 
 
 class FavouritePokemon(models.Model):
