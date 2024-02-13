@@ -29,6 +29,19 @@ services:
        timeout: 5s
        retries: 5
 
+  rabbit:
+    image: rabbitmq:3-management
+    container_name: rabbit
+    hostname: rabbit
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
@@ -39,6 +52,8 @@ services:
     env_file:
       envs/.django
     depends_on:
+      rabbit:
+        condition: service_started
       pokedex-db:
         condition: service_healthy
 
