@@ -9,8 +9,8 @@
 <ul>
     {% for pokemon in page_obj %}
     <li>
-        <a href="{% url 'pokemons:pokemon_detail' pokemon.name %}">
-            {{ pokemon.name }}
+        <a href="{% url 'pokemons:pokemon_detail' pokemon.pokemon_name %}">
+            {{ pokemon.pokemon_name }}
         </a>
 
     </li>

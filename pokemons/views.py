@@ -26,15 +26,7 @@ from .serializers import *
 class HomePageView(ListView):
     template_name = 'pokemons/home.html'
     paginate_by = 20
-
-    def get(self, request):
-        pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=100000')
-        pokemon_list_json = requests.get(pokemon_list_url).json()
-        pokemon_list = pokemon_list_json['results']
-        pokemon_paginator = Paginator(pokemon_list, self.paginate_by)
-        page_number = request.GET.get("page")
-        page_obj = pokemon_paginator.get_page(page_number)
-        return render(request, self.template_name, {"page_obj": page_obj})
+    model = Pokemon
 
 
 def create_or_update_pokemons():
