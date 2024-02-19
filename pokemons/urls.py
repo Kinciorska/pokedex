@@ -11,7 +11,7 @@ from pokemons.views import (
     MoveDetailView,
     PokemonTypesView,
     PokemonTypeDetailView,
-    )
+)
 
 app_name = 'pokemons'
 

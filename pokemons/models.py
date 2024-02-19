@@ -8,8 +8,8 @@ class Pokemon(models.Model):
     pokemon_name = models.CharField(max_length=200, unique=True)
     pokemon_height = models.IntegerField()
     pokemon_weight = models.IntegerField()
-    pokemon_img = models.CharField(max_length=200, null=True)
-    pokemon_img_shiny = models.CharField(max_length=200, null=True)
+    pokemon_img = models.FilePathField(max_length=200, null=True)
+    pokemon_img_shiny = models.FilePathField(max_length=200, null=True)
     pokemon_type_1 = models.CharField(max_length=200)
     pokemon_type_2 = models.CharField(max_length=200, blank=True, default='')
     pokemon_entry = models.CharField(max_length=1000, blank=True, default='')
@@ -51,8 +51,8 @@ class Team(models.Model):
             UniqueConstraint(
                 fields=['user', 'pokemon_number'],
                 name='unique_team',
-                violation_error_message= "There are already 6 pokemons in your team",)
-                ]
+                violation_error_message="There are already 6 pokemons in your team", )
+        ]
 
     def __str__(self):
         return str(self.id)
@@ -125,7 +125,6 @@ class PokemonInTeamQuerySet(models.QuerySet):
                                    Q(pokemon=pk_6))
 
 
-
 class PokemonMoves(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     move_number = models.SmallIntegerField()
@@ -134,7 +133,6 @@ class PokemonMoves(models.Model):
 
     objects = PokemonInTeamQuerySet.as_manager()
 
-
     class Meta:
         ordering = ['move_number']
         constraints = [
@@ -142,7 +140,7 @@ class PokemonMoves(models.Model):
                 fields=['pokemon', 'move_number', 'user'],
                 name='4_moves',
                 violation_error_message="There are already 4 moves assigned to this pokemon", ),
-            ]
+        ]
 
     def __str__(self):
         return str(self.move)

@@ -17,11 +17,11 @@ from rest_framework.generics import ListAPIView
 from urllib.parse import urljoin
 
 from .utils import POKE_API_ENDPOINT, POKEMON, MOVES, POKEMON_SPECIES, TYPES
-from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm, AddMoveForm, RemoveMoveForm
+from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm, \
+    AddMoveForm, RemoveMoveForm
 from .models import Pokemon, FavouritePokemon, Team, Move, PokemonMoves
-# from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
-# from pokemon_moves.models import PokemonMoves, Move
-from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, MoveSerializer
+from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, \
+    MoveSerializer
 
 
 class HomePageView(ListView):
@@ -30,7 +30,7 @@ class HomePageView(ListView):
     model = Pokemon
 
 
-def create_or_update_pokemons():
+def create_or_update_all_pokemon():
     pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=-1')
     pokemon_list_json = requests.get(pokemon_list_url).json()
     pokemon_list = pokemon_list_json['results']
@@ -61,12 +61,47 @@ def create_or_update_pokemons():
             pokemon_id=pokemon_id,
             pokemon_name=pokemon_name,
             pokemon_height=pokemon_height,
-            pokemon_weight = pokemon_weight,
-            pokemon_img = pokemon_img,
-            pokemon_img_shiny = pokemon_img_shiny,
+            pokemon_weight=pokemon_weight,
+            pokemon_img=pokemon_img,
+            pokemon_img_shiny=pokemon_img_shiny,
             pokemon_type_1=pokemon_type_1,
             pokemon_type_2=pokemon_type_2,
             pokemon_entry=flavor_text)
+
+
+def update_or_create_pokemon(pokemon_id):
+    pokemon_url = urljoin(POKE_API_ENDPOINT + POKEMON, str(pokemon_id))
+    pokemon_data = requests.get(pokemon_url).json()
+    pokemon_name = pokemon_data['name']
+    pokemon_weight = pokemon_data['weight']
+    pokemon_height = pokemon_data['height']
+    pokemon_img = pokemon_data['sprites']['other']['official-artwork']['front_default']
+    pokemon_img_shiny = pokemon_data['sprites']['other']['official-artwork']['front_shiny']
+    pokemon_species_url = pokemon_data['species']['url']
+    data = requests.get(pokemon_species_url).json()
+    flavor_texts_all = data['flavor_text_entries']
+    for text in flavor_texts_all:
+        if text['language']['name'] == 'en':
+            flavor_text = text['flavor_text']
+            break
+        else:
+            flavor_text = 'This pokemon is still unknown'
+    pokemon_type_1 = pokemon_data['types'][0]['type']['name']
+    try:
+        pokemon_type_2 = pokemon_data['types'][1]['type']['name']
+    except IndexError:
+        pokemon_type_2 = ''
+    pokemon = Pokemon.objects.update_or_create(
+        pokemon_id=pokemon_id,
+        pokemon_name=pokemon_name,
+        pokemon_height=pokemon_height,
+        pokemon_weight=pokemon_weight,
+        pokemon_img=pokemon_img,
+        pokemon_img_shiny=pokemon_img_shiny,
+        pokemon_type_1=pokemon_type_1,
+        pokemon_type_2=pokemon_type_2,
+        pokemon_entry=flavor_text)
+    return pokemon
 
 
 class PokemonView(View):
@@ -83,26 +118,16 @@ class PokemonView(View):
         is_favourite = False
         team_full = False
         moves_full = False
-        move_names =[]
+        move_names = []
 
         if request.user.is_authenticated:
-            user = request.user
-            pokemon_data = self.get_pokemon_data(pokemon_id)
-            pokemon_name = pokemon_data[0]
-            pokemon_type_1 = pokemon_data[1]
-            pokemon_type_2 = pokemon_data[2]
-            saved_pokemon = Pokemon.objects.get_or_create(
-                pokemon_id=pokemon_id,
-                pokemon_name=pokemon_name,
-                pokemon_type_1=pokemon_type_1,
-                pokemon_type_2=pokemon_type_2,
-            )
-            saved_pokemon = saved_pokemon[0]
-            pokemon_pk = getattr(saved_pokemon, 'id')
-            is_favourite = FavouritePokemon.objects.filter(pokemon=saved_pokemon, user=user).exists()
-            team_full = Team.objects.filter(user=user).count() == 6
-            moves_full = PokemonMoves.objects.filter(user=user,pokemon_id=pokemon_pk).count() == 4
-            move_names = get_moves_list(request, saved_pokemon)
+            pokemon = update_or_create_pokemon(pokemon_id)
+            pokemon = pokemon[0]
+            pokemon_pk = getattr(pokemon, 'pokemon_id')
+            is_favourite = FavouritePokemon.objects.filter(pokemon=pokemon, user=request.user).exists()
+            team_full = Team.objects.filter(user=request.user).count() == 6
+            moves_full = PokemonMoves.objects.filter(user=request.user, pokemon_id=pokemon_pk).count() == 4
+            move_names = get_moves_list(request, pokemon)
 
         context = {'pokemon': pokemon,
                    'pokemon_types_list': pokemon_types_list,
@@ -119,28 +144,16 @@ class PokemonView(View):
                    }
         return render(request, self.template_name, context)
 
-    def get_pokemon_data(self, pokemon_id):
-        url = urljoin(POKE_API_ENDPOINT + POKEMON, str(pokemon_id))
-        pokemon = requests.get(url).json()
-        pokemon_name = pokemon['name']
-        pokemon_type1 = pokemon['types'][0]['type']['name']
-        try:
-            pokemon_type2 = pokemon['types'][1]['type']['name']
-        except IndexError:
-            pokemon_type2 = ''
-        return pokemon_name, pokemon_type1, pokemon_type2
-
-
     @method_decorator(login_required(login_url='/website/login/'))
     def save_in_team(self, request, pokemon_id):
         user = request.user
-        existing_numbers = (Team.objects.filter(user=user)).values_list('pokemon_number', flat=True)
+        existing_numbers = (Team.filter(user=user)).values_list('pokemon_number', flat=True)
         if existing_numbers.count() != 6:
             numbers = set(range(1, 7))
             missing_number = list(numbers - set(existing_numbers))[0]
             pokemon_in_team = Team(user=user, pokemon_number=missing_number)
             pokemon_in_team.save()
-            pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
+            pokemon = Pokemon.get(pokemon_id=pokemon_id)
             pokemon_in_team.pokemon_id.add(pokemon)
             return
         messages.error(request, "There are already 6 pokemons in your team")
@@ -148,10 +161,11 @@ class PokemonView(View):
 
     def get_move_number(self, request, pokemon):
         user = request.user
-        existing_numbers = (PokemonMoves.objects.filter(user=user, pokemon=pokemon)).values_list('move_number', flat=True)
+        existing_numbers = (PokemonMoves.objects.filter(user=user, pokemon=pokemon)).values_list('move_number',
+                                                                                                 flat=True)
         match existing_numbers.count():
 
-            case 0|1|2|3:
+            case 0 | 1 | 2 | 3:
                 numbers = set(range(1, 5))
                 missing_number = list(numbers - set(existing_numbers))[0]
                 return missing_number
@@ -201,7 +215,7 @@ class PokemonView(View):
                 )
                 move = move[0]
                 number = self.get_move_number(request, pokemon)
-                if PokemonMoves.objects.filter(user=user,pokemon=pokemon, move=move).exists():
+                if PokemonMoves.objects.filter(user=user, pokemon=pokemon, move=move).exists():
                     messages.error(request, "This move is already assigned to this pokemon")
                     return
                 pokemon_move = PokemonMoves(user=user, move_number=number, pokemon=pokemon, move=move)
@@ -230,21 +244,23 @@ class PokemonView(View):
                            }
                 return render(request, self.template_name, context)
 
+
 def get_pokemon_id(id_or_name):
     url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
     pokemon = requests.get(url).json()
     pokemon_id = pokemon['id']
     return pokemon_id
 
+
 def get_moves_list(request, pokemon_pk):
-        user = request.user
-        move_numbers = PokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id', flat=True)
-        move_names_query = Move.objects.filter(pk__in=move_numbers).all()
-        move_names = []
-        for name in move_names_query:
-            name = str(name)
-            move_names.append(name)
-        return move_names
+    user = request.user
+    move_numbers = PokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id', flat=True)
+    move_names_query = Move.objects.filter(pk__in=move_numbers).all()
+    move_names = []
+    for name in move_names_query:
+        name = str(name)
+        move_names.append(name)
+    return move_names
 
 
 class PokemonTeamView(View):
@@ -322,7 +338,7 @@ class PokemonTeamView(View):
             'pokemon_move3_list': pokemon_data['moves3'],
             'pokemon_move4_list': pokemon_data['moves4'],
             'team_form': RemoveFromTeamForm,
-            }
+        }
         return render(request, self.template_name, context)
 
     @method_decorator(login_required(login_url='/website/login/'))
@@ -376,13 +392,14 @@ class FavouritePokemonView(ListView):
         favourite_pokemon.delete()
         return redirect('pokemons:favourite_pokemon')
 
+
 class AddMoveToPokemonView(View):
     model = Pokemon
 
     @method_decorator(login_required(login_url='/website/login/'))
     def get(self, request, pokemon, move):
         user = request.user
-        if self.model.objects.filter(user=user,name=pokemon).count() != 4:
+        if self.model.objects.filter(user=user, name=pokemon).count() != 4:
             for move_counter in range(4):
                 if not self.model.objects.filter(move_number=move_counter):
                     move_number = move_counter
@@ -392,6 +409,7 @@ class AddMoveToPokemonView(View):
         else:
             messages.error(request, "You already chose 4 moves for this pokemon")
             return redirect('pokemons:pokemon_detail', pokemon)
+
 
 class PokemonViewSet(viewsets.ModelViewSet):
     """
@@ -453,6 +471,7 @@ class PokemonDetail(APIView):
     """
         API endpoint that retrieves pokemon data from the PokeAPI.
         """
+
     def get(self, request, pokemon_name):
         pokemon_url = urljoin(POKE_API_ENDPOINT + POKEMON, pokemon_name)
         pokemon_species_url = urljoin(POKE_API_ENDPOINT + POKEMON_SPECIES, pokemon_name)
@@ -466,7 +485,7 @@ class PokemonDetail(APIView):
         pokemon_img = pokemon_data['sprites']['other']['official-artwork']['front_default']
         pokemon_img_shiny = pokemon_data['sprites']['other']['official-artwork']['front_shiny']
         data = {'pokemon_name': pokemon_name,
-                'pokemon_id':pokemon_id,
+                'pokemon_id': pokemon_id,
                 'pokemon_types_list': pokemon_types_list,
                 'pokemon_abilities_list': pokemon_abilities_list,
                 'pokemon_moves_list': pokemon_moves_list,
@@ -510,13 +529,13 @@ class MoveDetailView(TemplateView):
             )
             move = move[0]
         context = {'name': name,
-                   'accuracy':accuracy,
-                   'power':power,
+                   'accuracy': accuracy,
+                   'power': power,
                    'pp': pp,
                    'type': type,
                    'class': move_class,
                    'flavor_text_list': flavor_text_list,
-               }
+                   }
         return render(request, self.template_name, context)
 
 
@@ -543,8 +562,6 @@ class PokemonMovesList(APIView):
         pokemon_moves = PokemonMoves.objects.filter(user=user)
         serialized_pokemon_moves = PokemonMovesSerializer(pokemon_moves, many=True)
         return Response(serialized_pokemon_moves.data)
-
-
 
 
 class PokemonTypeDetailView(TemplateView):

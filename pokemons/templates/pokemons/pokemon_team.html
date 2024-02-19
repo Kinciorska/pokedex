@@ -18,7 +18,7 @@
         <th>Move 2</th>
         <th>Move 3</th>
         <th>Move 4</th>
-        <th> </th>
+        <th></th>
     </tr>
     </thead>
     <tbody>
@@ -52,68 +52,68 @@
         </td>
         <td>
             {% for type_2 in pokemon_type_2_list %}
-                {% if type_2 == '' %}
-                <li>{{ type_2 }}</li>
-                {% else %}
-                <li>
-                    <a href="{% url 'pokemons:pokemon_type' type_2 %}">
-                        {{ type_2 }}
-                    </a>
-                </li>
-                {% endif %}
+            {% if type_2 == '' %}
+            <li>{{ type_2 }}</li>
+            {% else %}
+            <li>
+                <a href="{% url 'pokemons:pokemon_type' type_2 %}">
+                    {{ type_2 }}
+                </a>
+            </li>
+            {% endif %}
             {% endfor %}
         </td>
 
         <td>
             {% for move in pokemon_move1_list %}
             {% if move == '' %}
-                <li>{{ move }}</li>
-                {% else %}
-                <li>
-                    <a href="{% url 'pokemon_moves:move_details' move %}">
-                        {{ move }}
-                    </a>
-                </li>
-                {% endif %}
+            <li>{{ move }}</li>
+            {% else %}
+            <li>
+                <a href="{% url 'pokemon_moves:move_details' move %}">
+                    {{ move }}
+                </a>
+            </li>
+            {% endif %}
             {% endfor %}
         </td>
         <td>
             {% for move in pokemon_move2_list %}
             {% if move == '' %}
-                <li>{{ move }}</li>
-                {% else %}
-                <li>
-                    <a href="{% url 'pokemon_moves:move_details' move %}">
-                        {{ move }}
-                    </a>
-                </li>
-                {% endif %}
+            <li>{{ move }}</li>
+            {% else %}
+            <li>
+                <a href="{% url 'pokemon_moves:move_details' move %}">
+                    {{ move }}
+                </a>
+            </li>
+            {% endif %}
             {% endfor %}
         </td>
         <td>
             {% for move in pokemon_move3_list %}
             {% if move == '' %}
-                <li>{{ move }}</li>
-                {% else %}
-                <li>
-                    <a href="{% url 'pokemon_moves:move_details' move %}">
-                        {{ move }}
-                    </a>
-                </li>
-                {% endif %}
+            <li>{{ move }}</li>
+            {% else %}
+            <li>
+                <a href="{% url 'pokemon_moves:move_details' move %}">
+                    {{ move }}
+                </a>
+            </li>
+            {% endif %}
             {% endfor %}
         </td>
         <td>
             {% for move in pokemon_move4_list %}
             {% if move == '' %}
-                <li>{{ move }}</li>
-                {% else %}
-                <li>
-                    <a href="{% url 'pokemon_moves:move_details' move %}">
-                        {{ move }}
-                    </a>
-                </li>
-                {% endif %}
+            <li>{{ move }}</li>
+            {% else %}
+            <li>
+                <a href="{% url 'pokemon_moves:move_details' move %}">
+                    {{ move }}
+                </a>
+            </li>
+            {% endif %}
             {% endfor %}
         </td>
         <td>
@@ -130,7 +130,6 @@
     </tr>
     </tbody>
 </table>
-
 
 
 <a href="{% url 'home' %}">Back to Home</a>

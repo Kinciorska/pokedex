@@ -9,6 +9,7 @@
 <ul>
     {% for pokemon in page_obj %}
     <li>
+        <img src="{{pokemon.pokemon_img}}"/>
         <a href="{% url 'pokemons:pokemon_detail' pokemon.pokemon_name %}">
             {{ pokemon.pokemon_name }}
         </a>

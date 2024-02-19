@@ -17,6 +17,7 @@ class PokemonIdSerializer(serializers.HyperlinkedModelSerializer):
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
     pokemon_id = PokemonSerializer(read_only=True, many=True)
+
     class Meta:
         model = Team
         fields = ['pokemon_number', 'pokemon_id']
@@ -41,6 +42,7 @@ class PokemonMovesSerializer(serializers.HyperlinkedModelSerializer):
 
 class FavouritePokemonSerializer(serializers.HyperlinkedModelSerializer):
     pokemon = PokemonSerializer(many=False)
+
     class Meta:
         model = FavouritePokemon
         fields = ['pokemon']
