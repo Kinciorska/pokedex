@@ -44,7 +44,7 @@
                     <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="move_name" value={{ moves.move.name }}>
-                        {% if moves_full is False and moves.move.name not in move_names %}
+                        {% if not moves_full and moves.move.name not in move_names %}
                             <input type="submit" name="add_move_form" value="Choose this move">
                         {% endif %}
                     </form>
@@ -58,7 +58,7 @@
 </table>
 {% if user.is_authenticated %}
 
-    {% if is_favourite is False %}
+    {% if not is_favourite %}
     <form method="post">
         {% csrf_token %}
         {{ favourite_form }}
@@ -68,7 +68,7 @@
     <p>This pokemon is set as favourite</p>
     {% endif %}
 
-    {% if team_full is False %}
+    {% if not team_full %}
     <form method="post">
         {% csrf_token %}
         {{ team_form }}
@@ -76,7 +76,7 @@
     </form>
     {% endif %}
 
-    {% if team_full is True %}
+    {% if team_full %}
     <p>You already have 6 pokemons in your team. Remove
         <a href="{% url 'pokemons:pokemon_team' %}">one of them.</a>
     </p>
