@@ -2,12 +2,12 @@ import requests
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.core.paginator import Paginator
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import View
+from django.views.generic.base import TemplateView
 
 from rest_framework import permissions, viewsets
 from rest_framework.views import APIView
@@ -16,11 +16,12 @@ from rest_framework.generics import ListAPIView
 
 from urllib.parse import urljoin
 
-from .utils import POKE_API_ENDPOINT, POKEMON, MOVES, POKEMON_SPECIES
-from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm
-from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
-from pokemon_moves.models import PokemonMoves, Move
-from .serializers import *
+from .utils import POKE_API_ENDPOINT, POKEMON, MOVES, POKEMON_SPECIES, TYPES
+from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm, AddMoveForm, RemoveMoveForm
+from .models import Pokemon, FavouritePokemon, Team, Move, PokemonMoves
+# from pokemon_moves.forms import AddMoveForm, RemoveMoveForm
+# from pokemon_moves.models import PokemonMoves, Move
+from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, MoveSerializer
 
 
 class HomePageView(ListView):
@@ -30,7 +31,7 @@ class HomePageView(ListView):
 
 
 def create_or_update_pokemons():
-    pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=100000')
+    pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=-1')
     pokemon_list_json = requests.get(pokemon_list_url).json()
     pokemon_list = pokemon_list_json['results']
     for pokemon in pokemon_list:
@@ -476,5 +477,101 @@ class PokemonDetail(APIView):
         return Response(data)
 
 
+class MovesView(TemplateView):
+    template_name = 'pokemons/pokemon_moves.html'
+
+    def get_context_data(self, **kwargs):
+        url = urljoin(POKE_API_ENDPOINT, MOVES)
+        pokemon_moves = requests.get(url).json()
+        context = super().get_context_data(**kwargs)
+        context['moves_list'] = pokemon_moves['results']
+        return context
 
 
+class MoveDetailView(TemplateView):
+    template_name = 'pokemons/move_detail.html'
+
+    def get(self, request, id_or_name):
+        url = urljoin(POKE_API_ENDPOINT + MOVES, id_or_name)
+        pokemon_move = requests.get(url).json()
+        id = pokemon_move['id']
+        name = pokemon_move['name']
+        accuracy = pokemon_move['accuracy']
+        power = pokemon_move['power']
+        pp = pokemon_move['pp']
+        type = pokemon_move['type']
+        move_class = pokemon_move['damage_class']
+        flavor_text_list = pokemon_move['flavor_text_entries']
+        if request.user.is_authenticated:
+            move = Move.objects.get_or_create(
+                move_id=id,
+                move_name=name,
+                move_type=type['name'],
+            )
+            move = move[0]
+        context = {'name': name,
+                   'accuracy':accuracy,
+                   'power':power,
+                   'pp': pp,
+                   'type': type,
+                   'class': move_class,
+                   'flavor_text_list': flavor_text_list,
+               }
+        return render(request, self.template_name, context)
+
+
+class MoveViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows all moves to be viewed.
+    """
+    queryset = Move.objects.all()
+    serializer_class = MoveSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class PokemonMovesList(APIView):
+    """
+    API endpoint that allows to view the Pokémon and their assigned moves.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, format=None):
+        """
+        This view should return a list of all the Pokémon and their moves, filtered by the current user.
+        """
+        user = request.user
+        pokemon_moves = PokemonMoves.objects.filter(user=user)
+        serialized_pokemon_moves = PokemonMovesSerializer(pokemon_moves, many=True)
+        return Response(serialized_pokemon_moves.data)
+
+
+
+
+class PokemonTypeDetailView(TemplateView):
+    template_name = 'pokemons/type_details.html'
+
+    def get_context_data(self, id_or_name, **kwargs):
+        url = urljoin(POKE_API_ENDPOINT + TYPES, id_or_name)
+        pokemon_types = requests.get(url).json()
+        context = super().get_context_data(**kwargs)
+        context['type_name'] = pokemon_types['name']
+        context['pokemons_in_type'] = pokemon_types['pokemon']
+        context['moves_in_type'] = pokemon_types['moves']
+        context['double_damage_from'] = pokemon_types['damage_relations']['double_damage_from']
+        context['double_damage_to'] = pokemon_types['damage_relations']['double_damage_to']
+        context['half_damage_from'] = pokemon_types['damage_relations']['half_damage_from']
+        context['half_damage_to'] = pokemon_types['damage_relations']['half_damage_to']
+        context['no_damage_from'] = pokemon_types['damage_relations']['no_damage_from']
+        context['no_damage_to'] = pokemon_types['damage_relations']['no_damage_to']
+        return context
+
+
+class PokemonTypesView(TemplateView):
+    template_name = 'pokemons/pokemon_types.html'
+
+    def get_context_data(self, **kwargs):
+        url = urljoin(POKE_API_ENDPOINT, TYPES)
+        pokemon_types = requests.get(url).json()
+        context = super().get_context_data(**kwargs)
+        context['type_list'] = pokemon_types['results']
+        return context

@@ -19,8 +19,7 @@ from django.urls import path, include
 from rest_framework import routers
 
 from website.views import HomePageView, RegisterView, LoginView, LogoutView, UserViewSet, GroupViewSet
-from pokemon_moves.views import MoveViewSet, PokemonMovesList
-from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList, PokemonDetail
+from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList, PokemonDetail, MoveViewSet, PokemonMovesList
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -39,8 +38,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('pokemons/', include('pokemons.urls')),
-    path('types/', include('pokemon_types.urls')),
-    path('pokemon_moves/', include('pokemon_moves.urls')),
     path('pokemon_moves_list/', PokemonMovesList.as_view(), name='pokemon_moves'),
     path('team/', TeamMovesList.as_view(), name='team'),
     path('pokemon_detail/<pokemon_name>/', PokemonDetail.as_view(), name='pokemon_detail')

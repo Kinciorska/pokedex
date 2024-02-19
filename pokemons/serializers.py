@@ -1,14 +1,13 @@
-from pokemons.models import Pokemon, Team, FavouritePokemon
-from pokemon_moves.serializers import MoveSerializer
-from pokemon_moves.models import PokemonMoves
-
 from rest_framework import serializers
+
+from .models import Pokemon, Team, FavouritePokemon, Move, PokemonMoves
 
 
 class PokemonSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Pokemon
         fields = ['pokemon_id', 'pokemon_name', 'pokemon_type_1', 'pokemon_type_2']
+
 
 class PokemonIdSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -23,6 +22,13 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['pokemon_number', 'pokemon_id']
         depth = 1
 
+
+class MoveSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Move
+        fields = ['move_id', 'move_name', 'move_type']
+
+
 class PokemonMovesSerializer(serializers.HyperlinkedModelSerializer):
     pokemon = PokemonIdSerializer(read_only=True, many=False)
     move = MoveSerializer(read_only=True, many=False)
@@ -31,7 +37,6 @@ class PokemonMovesSerializer(serializers.HyperlinkedModelSerializer):
         model = PokemonMoves
         fields = ['pokemon', 'move_number', 'move']
         depth = 1
-
 
 
 class FavouritePokemonSerializer(serializers.HyperlinkedModelSerializer):

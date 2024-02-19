@@ -6,7 +6,11 @@ from pokemons.views import (
     SearchPokemonView,
     FavouritePokemonView,
     PokemonTeamView,
-    AddMoveToPokemonView
+    AddMoveToPokemonView,
+    MovesView,
+    MoveDetailView,
+    PokemonTypesView,
+    PokemonTypeDetailView,
     )
 
 app_name = 'pokemons'
@@ -18,4 +22,8 @@ urlpatterns = [
     path('favourites/', FavouritePokemonView.as_view(), name='favourite_pokemon'),
     path('team/', PokemonTeamView.as_view(), name='pokemon_team'),
     path('add_move/<pokemon>/<str:move>/', AddMoveToPokemonView.as_view(), name='add_move'),
+    path('moves', MovesView.as_view(), name="pokemon_moves"),
+    path('move/<str:id_or_name>/', MoveDetailView.as_view(), name="move_details"),
+    path('pokemon_types', PokemonTypesView.as_view(), name="pokemon_types"),
+    path('type/<str:id_or_name>/', PokemonTypeDetailView.as_view(), name="pokemon_type"),
 ]
