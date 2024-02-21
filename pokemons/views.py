@@ -2,6 +2,7 @@ import requests
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django.contrib.auth.decorators import login_required
@@ -21,7 +22,7 @@ from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFa
     AddMoveForm, RemoveMoveForm
 from .models import Pokemon, FavouritePokemon, Team, Move, PokemonMoves
 from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, \
-    MoveSerializer
+    MoveSerializer, TeamPokemonMovesSerializer
 
 
 class HomePageView(ListView):
@@ -147,13 +148,13 @@ class PokemonView(View):
     @method_decorator(login_required(login_url='/website/login/'))
     def save_in_team(self, request, pokemon_id):
         user = request.user
-        existing_numbers = (Team.filter(user=user)).values_list('pokemon_number', flat=True)
+        existing_numbers = (Team.objects.filter(user=user)).values_list('pokemon_number', flat=True)
         if existing_numbers.count() != 6:
             numbers = set(range(1, 7))
             missing_number = list(numbers - set(existing_numbers))[0]
             pokemon_in_team = Team(user=user, pokemon_number=missing_number)
             pokemon_in_team.save()
-            pokemon = Pokemon.get(pokemon_id=pokemon_id)
+            pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
             pokemon_in_team.pokemon_id.add(pokemon)
             return
         messages.error(request, "There are already 6 pokemons in your team")
@@ -445,13 +446,13 @@ class TeamMovesList(ListAPIView):
     serializer_class_Team = TeamSerializer
     serializer_class_PokemonMove = PokemonMovesSerializer
 
-    def get_queryset_Team(self, user):
+    def get_queryset_team(self, user):
         """
         This queryset should return a list of all the Pokémon in the team of the user.
         """
         return Team.objects.filter(user=user)
 
-    def get_queryset_PokemonMove(self, user):
+    def get_queryset_pokemonmove(self, user):
         """
         This queryset should return a list of all the moves of Pokémon in the team of the user.
         """
@@ -459,8 +460,8 @@ class TeamMovesList(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         user = self.request.user
-        team = self.serializer_class_Team(self.get_queryset_Team(user), many=True)
-        move = self.serializer_class_PokemonMove(self.get_queryset_PokemonMove(user), many=True)
+        team = self.serializer_class_Team(self.get_queryset_team(user), many=True)
+        move = self.serializer_class_PokemonMove(self.get_queryset_pokemonmove(user), many=True)
         data = {'Team': team.data,
                 'Pokemon moves:': move.data
                 }
@@ -498,13 +499,24 @@ class PokemonDetail(APIView):
 
 class MovesView(TemplateView):
     template_name = 'pokemons/pokemon_moves.html'
+    paginate_by = 30
 
-    def get_context_data(self, **kwargs):
-        url = urljoin(POKE_API_ENDPOINT, MOVES)
-        pokemon_moves = requests.get(url).json()
-        context = super().get_context_data(**kwargs)
-        context['moves_list'] = pokemon_moves['results']
-        return context
+    # def get_context_data(self, **kwargs):
+    #     url = urljoin(POKE_API_ENDPOINT, MOVES)
+    #     pokemon_moves = requests.get(url).json()
+    #     context = super().get_context_data(**kwargs)
+    #     context['moves_list'] = pokemon_moves['results']
+    #     return context
+
+
+    def get(self, request):
+        move_list_url = urljoin(POKE_API_ENDPOINT + MOVES, '?limit=-1')
+        move_list_json = requests.get(move_list_url).json()
+        move_list = move_list_json['results']
+        pokemon_paginator = Paginator(move_list, self.paginate_by)
+        page_number = request.GET.get("page")
+        page_obj = pokemon_paginator.get_page(page_number)
+        return render(request, self.template_name, {"page_obj": page_obj})
 
 
 class MoveDetailView(TemplateView):
@@ -552,7 +564,7 @@ class PokemonMovesList(APIView):
     """
     API endpoint that allows to view the Pokémon and their assigned moves.
     """
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, format=None):
         """
