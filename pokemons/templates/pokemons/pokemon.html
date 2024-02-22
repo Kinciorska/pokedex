@@ -61,7 +61,7 @@
     {% if not is_favourite %}
     <form method="post">
         {% csrf_token %}
-        {{ favourite_form }}
+        {{ favourite_form| crispy }}
         <input type="submit" name="favourite_form" value="Add to favourites">
     </form>
     {% else %}
