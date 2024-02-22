@@ -19,7 +19,8 @@ from django.urls import path, include
 from rest_framework import routers
 
 from website.views import HomePageView, RegisterView, LoginView, LogoutView, UserViewSet, GroupViewSet
-from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList, PokemonDetail, MoveViewSet, PokemonMovesList
+from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList, PokemonDetail, MoveViewSet, \
+    PokemonMovesList
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -27,7 +28,6 @@ router.register(r'groups', GroupViewSet)
 router.register(r'moves', MoveViewSet)
 router.register(r'pokemon', PokemonViewSet, basename='pokemon_list')
 router.register(r'favourite', FavouritePokemonViewSet, basename='favourite_list')
-
 
 urlpatterns = [
     path('admin/', admin.site.urls),

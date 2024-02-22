@@ -22,7 +22,7 @@ from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFa
     AddMoveForm, RemoveMoveForm
 from .models import Pokemon, FavouritePokemon, Team, Move, PokemonMoves
 from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, \
-    MoveSerializer, TeamPokemonMovesSerializer
+    MoveSerializer
 
 
 class HomePageView(ListView):
@@ -500,14 +500,6 @@ class PokemonDetail(APIView):
 class MovesView(TemplateView):
     template_name = 'pokemons/pokemon_moves.html'
     paginate_by = 30
-
-    # def get_context_data(self, **kwargs):
-    #     url = urljoin(POKE_API_ENDPOINT, MOVES)
-    #     pokemon_moves = requests.get(url).json()
-    #     context = super().get_context_data(**kwargs)
-    #     context['moves_list'] = pokemon_moves['results']
-    #     return context
-
 
     def get(self, request):
         move_list_url = urljoin(POKE_API_ENDPOINT + MOVES, '?limit=-1')
