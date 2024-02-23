@@ -31,45 +31,6 @@ class HomePageView(ListView):
     model = Pokemon
 
 
-def create_or_update_all_pokemon():
-    pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=-1')
-    pokemon_list_json = requests.get(pokemon_list_url).json()
-    pokemon_list = pokemon_list_json['results']
-    for pokemon in pokemon_list:
-        pokemon_url = pokemon['url']
-        pokemon_name = pokemon['name']
-        pokemon_data = requests.get(pokemon_url).json()
-        pokemon_id = pokemon_data['id']
-        pokemon_weight = pokemon_data['weight']
-        pokemon_height = pokemon_data['height']
-        pokemon_img = pokemon_data['sprites']['other']['official-artwork']['front_default']
-        pokemon_img_shiny = pokemon_data['sprites']['other']['official-artwork']['front_shiny']
-        pokemon_species_url = pokemon_data['species']['url']
-        data = requests.get(pokemon_species_url).json()
-        flavor_texts_all = data['flavor_text_entries']
-        for text in flavor_texts_all:
-            if text['language']['name'] == 'en':
-                flavor_text = text['flavor_text']
-                break
-            else:
-                flavor_text = 'This pokemon is still unknown'
-        pokemon_type_1 = pokemon_data['types'][0]['type']['name']
-        try:
-            pokemon_type_2 = pokemon_data['types'][1]['type']['name']
-        except IndexError:
-            pokemon_type_2 = ''
-        saved_pokemon = Pokemon.objects.update_or_create(
-            pokemon_id=pokemon_id,
-            pokemon_name=pokemon_name,
-            pokemon_height=pokemon_height,
-            pokemon_weight=pokemon_weight,
-            pokemon_img=pokemon_img,
-            pokemon_img_shiny=pokemon_img_shiny,
-            pokemon_type_1=pokemon_type_1,
-            pokemon_type_2=pokemon_type_2,
-            pokemon_entry=flavor_text)
-
-
 def update_or_create_pokemon(pokemon_id):
     pokemon_url = urljoin(POKE_API_ENDPOINT + POKEMON, str(pokemon_id))
     pokemon_data = requests.get(pokemon_url).json()

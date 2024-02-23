@@ -45,13 +45,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'celery',
+    'django_celery_results',
+    'django_celery_beat',
     'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
     'pokemons',
     'website',
-    'pokemon_types',
-    'pokemon_moves',
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
@@ -153,3 +154,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery properties
+CELERY_BROKER_URL = 'amqp://admin:admin@rabbit:5672//'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
