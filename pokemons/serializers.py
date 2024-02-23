@@ -16,7 +16,7 @@ class PokemonIdSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
-    pokemon_id = PokemonSerializer(read_only=True, many=True)
+    pokemon_id = PokemonIdSerializer(read_only=True, many=True)
 
     class Meta:
         model = Team
@@ -31,7 +31,7 @@ class MoveSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class PokemonMovesSerializer(serializers.HyperlinkedModelSerializer):
-    pokemon = PokemonIdSerializer(read_only=True, many=False)
+    pokemon = PokemonSerializer(read_only=True, many=False)
     move = MoveSerializer(read_only=True, many=False)
 
     class Meta:
