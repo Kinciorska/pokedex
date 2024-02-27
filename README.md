@@ -57,6 +57,13 @@ Apply Django migrations using
 docker-compose run web python manage.py migrate
 ```
 
+
+### Start Celery:
+Start the worker and the beat using
+```
+docker-compose run web celery -A pokedex worker --beat --scheduler django --loglevel=info
+```
+
 ### Technologies
 - Django
 - PostgreSQL
