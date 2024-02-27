@@ -1,18 +1,29 @@
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import UniqueConstraint
 from django.contrib.auth.models import User
+
 
 
 class Pokemon(models.Model):
     pokemon_id = models.IntegerField(unique=True)
-    pokemon_name = models.CharField(max_length=200, unique=True)
+    pokemon_name = models.CharField(max_length=100, unique=True)
     pokemon_height = models.IntegerField()
     pokemon_weight = models.IntegerField()
     pokemon_img = models.FilePathField(max_length=200, null=True)
     pokemon_img_shiny = models.FilePathField(max_length=200, null=True)
-    pokemon_type_1 = models.CharField(max_length=200)
-    pokemon_type_2 = models.CharField(max_length=200, blank=True, default='')
-    pokemon_entry = models.CharField(max_length=1000, blank=True, default='')
+    pokemon_entry = models.TextField(max_length=1000, blank=True, default='')
+
+    POKEMON_TYPE_CHOICES = [('grass', 'GRASS'), ('fire', 'FIRE'), ('water', 'WATER'), ('bug', 'BUG'),
+                            ('normal', 'NORMAL'),
+                            ('poison', 'POISON'), ('electric', 'ELECTRIC'), ('ground', 'GROUND'),
+                            ('fighting', 'FIGHTING'),
+                            ('psychic', 'PSYCHIC'), ('rock', 'ROCK'), ('ghost', 'GHOST'), ('ice', 'ICE'),
+                            ('dragon', 'DRAGON'),
+                            ('dark', 'DARK'), ('steel', 'STEEL'), ('flying', 'FLYING'), ('', None)]
+
+    pokemon_type_1 = models.CharField(max_length=50, choices=POKEMON_TYPE_CHOICES)
+    pokemon_type_2 = models.CharField(max_length=50, choices=POKEMON_TYPE_CHOICES, blank=True, default='')
+
 
     class Meta:
         ordering = ['pokemon_id']
@@ -27,16 +38,6 @@ class FavouritePokemon(models.Model):
 
     def __str__(self):
         return self.pokemon.pokemon_name
-
-
-# class PokemonInTeam(models.Model):
-#     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-#     pokemon = models.ManyToManyField(Pokemon)
-#     order = models.PositiveSmallIntegerField()
-#
-# class Team:
-#     name = models.CharField(max_length=50)
-#     user = models.OneToOneField(to=User)
 
 
 class Team(models.Model):

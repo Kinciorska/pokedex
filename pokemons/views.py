@@ -31,7 +31,7 @@ class HomePageView(ListView):
     model = Pokemon
 
 
-def update_or_create_pokemon(pokemon_id):
+def update_pokemon(pokemon_id):
     pokemon_url = urljoin(POKE_API_ENDPOINT + POKEMON, str(pokemon_id))
     pokemon_data = requests.get(pokemon_url).json()
     pokemon_name = pokemon_data['name']
@@ -53,17 +53,17 @@ def update_or_create_pokemon(pokemon_id):
         pokemon_type_2 = pokemon_data['types'][1]['type']['name']
     except IndexError:
         pokemon_type_2 = ''
-    pokemon = Pokemon.objects.update_or_create(
-        pokemon_id=pokemon_id,
-        pokemon_name=pokemon_name,
-        pokemon_height=pokemon_height,
-        pokemon_weight=pokemon_weight,
-        pokemon_img=pokemon_img,
-        pokemon_img_shiny=pokemon_img_shiny,
-        pokemon_type_1=pokemon_type_1,
-        pokemon_type_2=pokemon_type_2,
-        pokemon_entry=flavor_text)
-    return pokemon
+
+    pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
+    pokemon.pokemon_name = pokemon_name
+    pokemon.pokemon_height = pokemon_height
+    pokemon.pokemon_weight = pokemon_weight
+    pokemon.pokemon_img = pokemon_img
+    pokemon.pokemon_img_shiny = pokemon_img_shiny
+    pokemon.pokemon_type_1 = pokemon_type_1
+    pokemon.pokemon_type_2 = pokemon_type_2
+    pokemon.pokemon_entry = flavor_text
+    pokemon.save()
 
 
 class PokemonView(View):
@@ -73,7 +73,6 @@ class PokemonView(View):
     def get(self, request, id_or_name):
         url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
         pokemon = requests.get(url).json()
-        pokemon_id = pokemon['id']
         pokemon_types_list = pokemon['types']
         pokemon_abilities_list = pokemon['abilities']
         pokemon_moves_list = pokemon['moves']
@@ -83,9 +82,10 @@ class PokemonView(View):
         move_names = []
 
         if request.user.is_authenticated:
-            pokemon = update_or_create_pokemon(pokemon_id)
-            pokemon = pokemon[0]
-            pokemon_pk = getattr(pokemon, 'pokemon_id')
+            pokemon_id = pokemon['id']
+            update_pokemon(pokemon_id)
+            pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
+            pokemon_pk = getattr(pokemon, 'id')
             is_favourite = FavouritePokemon.objects.filter(pokemon=pokemon, user=request.user).exists()
             team_full = Team.objects.filter(user=request.user).count() == 6
             moves_full = PokemonMoves.objects.filter(user=request.user, pokemon_id=pokemon_pk).count() == 4
