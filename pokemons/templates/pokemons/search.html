@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %} Search {% endblock%}
+{% block title %} Search {% endblock %}
 
 {% block content %}
 <body>
 <h1>Search for a pokemon</h1>
 <form id="search_pokemon" method="post">
-    {{ form| crispy }}
+    {{ form|crispy }}
     {% csrf_token %}
     <input type="submit" value="Search">
 </form>
