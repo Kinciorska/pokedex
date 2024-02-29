@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<h1>{{ name |upper }}</h1>
+<h1>{{ name|upper }}</h1>
 <table>
     <thead>
     <tr>
@@ -31,12 +31,12 @@
             <li>{{ type.name }}</li>
         </td>
         <td>
-            <li> { class.name }}</li>
+            <li>{{ class.name }}</li>
         </td>
         <td>
             {% for entry in flavor_text_list %}
             {% if entry.language.name == "en" %}
-            <li>{{ entry.flavor_text }} {{ entry.version_group.name |upper }}</li>
+            <li>{{ entry.flavor_text }} {{ entry.version_group.name|upper }}</li>
             {% endif %}
             {% endfor %}
         </td>
