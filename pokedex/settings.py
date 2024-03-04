@@ -19,9 +19,13 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DJANGO_ENV_DIR = os.path.join(BASE_DIR, 'envs\.django')
+DJANGO_ENV_DIR = os.path.join(BASE_DIR, 'envs/.django')
+RABBITMQ_ENV_DIR = os.path.join(BASE_DIR, 'envs/.rabbitmq')
+
 
 load_dotenv(DJANGO_ENV_DIR)
+load_dotenv(RABBITMQ_ENV_DIR)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -156,6 +160,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery properties
-CELERY_BROKER_URL = 'amqp://admin:admin@rabbit:5672//'
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+BROKER_URL = f"{os.getenv('RABBITMQ_PROTOCOL')}://{os.getenv('RABBITMQ_USER')}:{os.getenv('RABBITMQ_PASSWORD')}@{os.getenv('RABBITMQ_HOST')}:{os.getenv('RABBITMQ_PORT')}//"
+RESULT_BACKEND = 'django-db'
+BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
