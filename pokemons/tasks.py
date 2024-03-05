@@ -20,7 +20,7 @@ PeriodicTask.objects.update_or_create(
     task='pokemons.tasks.update_all_pokemon',
 )
 
-@shared_task
+@shared_task(name='create_all_pokemon')
 def create_all_pokemon():
     pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=-1')
     pokemon_list_json = requests.get(pokemon_list_url).json()
@@ -62,7 +62,7 @@ def create_all_pokemon():
                 pokemon_entry=flavor_text)
 
 
-@shared_task
+@shared_task(name='update_all_pokemon')
 def update_all_pokemon():
     pokemon_list_url = urljoin(POKE_API_ENDPOINT + POKEMON, '?limit=-1')
     pokemon_list_json = requests.get(pokemon_list_url).json()

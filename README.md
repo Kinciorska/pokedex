@@ -40,6 +40,8 @@ Needed environment files:
 
 - .postgres
 
+- .rabbitmq
+
 Environment files should be located in .envs directory, examples of these environment files are available in the same directory.
  
 Build the Docker container using
@@ -64,10 +66,20 @@ Start the worker and the beat using
 docker-compose run web celery -A pokedex worker --beat --scheduler django --loglevel=info
 ```
 
+### Save all the Pokémon to the db:
+Start the create_all_pokemon task using
+```
+docker-compose run web python manage.py shell
+>>> from pokemons.tasks import create_all_pokemon
+>>> create_all_pokemon()
+```
+
 ### Technologies
 - Django
 - PostgreSQL
 - Docker
+- RabbitMQ
+- Celery
 
 
 #### License
