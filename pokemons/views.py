@@ -3,6 +3,7 @@ import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.core.exceptions import ObjectDoesNotExist
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django.contrib.auth.decorators import login_required
@@ -102,10 +103,7 @@ class PokemonView(View):
     def get_chosen_moves_list(self, user, pokemon_pk):
         move_numbers = PokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id', flat=True)
         move_names_query = Move.objects.filter(pk__in=move_numbers).all()
-        move_names = []
-        for name in move_names_query:
-            name = str(name)
-            move_names.append(name)
+        move_names = [str(name) for name in move_names_query]
         return move_names
 
 
@@ -175,6 +173,16 @@ class PokemonView(View):
 class PokemonTeamView(View):
     template_name = 'pokemons/pokemon_team.html'
 
+    def get_move(self, user, pk, move_number):
+        try:
+            pokemon_move = PokemonMoves.objects.get(user=user, pokemon_id=pk, move_number=move_number)
+            print(type(pokemon_move.move))
+            print(pokemon_move.move)
+            move = pokemon_move.move
+        except ObjectDoesNotExist:
+            move = ''
+        return move
+
     @method_decorator(login_required(login_url='/website/login/'))
     def get(self, request):
         user = request.user
@@ -183,69 +191,24 @@ class PokemonTeamView(View):
         pokemon_number_list = list(pokemon_number)
         pokemon_pk = all_pokemons.values_list('pokemon_id', flat=True)
         pokemon_pk_list = list(pokemon_pk)
-        pokemon_data = {'number': pokemon_number_list,
-                        'id': [],
-                        'name': [],
-                        'type_1': [],
-                        'type_2': [],
-                        'moves1': [],
-                        'moves2': [],
-                        'moves3': [],
-                        'moves4': [],
-                        }
-        for pk in pokemon_pk_list:
-            current_pokemon = Pokemon.objects.get(id=pk)
-            pokemon_id = getattr(current_pokemon, 'pokemon_id')
-            name = getattr(current_pokemon, 'pokemon_name')
-            type_1 = getattr(current_pokemon, 'pokemon_type_1')
-            type_2 = getattr(current_pokemon, 'pokemon_type_2')
-            moves = PokemonMoves.objects.filter(user=user, pokemon_id=pk).all()
-            moves_number = moves.values_list('move_number', flat=True)
-            moves_number = list(moves_number)
-            for number in moves_number:
-                match number:
-                    case 1:
-                        move1 = str(moves.get(move_number=1))
-                        pokemon_data['moves1'].append(move1)
-                    case 2:
-                        move2 = str(moves.get(move_number=2))
-                        pokemon_data['moves2'].append(move2)
-                    case 3:
-                        move3 = str(moves.get(move_number=3))
-                        pokemon_data['moves3'].append(move3)
-                    case 4:
-                        move4 = str(moves.get(move_number=4))
-                        pokemon_data['moves4'].append(move4)
-            numbers = set(range(1, 5))
-            missing_numbers = list(numbers - set(moves_number))
-            for number in missing_numbers:
-                match number:
-                    case 1:
-                        move1 = ""
-                        pokemon_data['moves1'].append(move1)
-                    case 2:
-                        move2 = ""
-                        pokemon_data['moves2'].append(move2)
-                    case 3:
-                        move3 = ""
-                        pokemon_data['moves3'].append(move3)
-                    case 4:
-                        move4 = ""
-                        pokemon_data['moves4'].append(move4)
-            pokemon_data['id'].append(pokemon_id)
-            pokemon_data['name'].append(name)
-            pokemon_data['type_1'].append(type_1)
-            pokemon_data['type_2'].append(type_2)
+        pokemon_id = [getattr(Pokemon.objects.get(id=pk), 'pokemon_id') for pk in pokemon_pk_list]
+        pokemon_name = [getattr(Pokemon.objects.get(id=pk), 'pokemon_name')for pk in pokemon_pk_list]
+        pokemon_type_1 = [getattr(Pokemon.objects.get(id=pk), 'pokemon_type_1') for pk in pokemon_pk_list]
+        pokemon_type_2 = [getattr(Pokemon.objects.get(id=pk), 'pokemon_type_2') for pk in pokemon_pk_list]
+        pokemon_moves_1 = [self.get_move(user, pk, 1) for pk in pokemon_pk_list]
+        pokemon_moves_2 = [self.get_move(user, pk, 2) for pk in pokemon_pk_list]
+        pokemon_moves_3 = [self.get_move(user, pk, 3) for pk in pokemon_pk_list]
+        pokemon_moves_4 = [self.get_move(user, pk, 4) for pk in pokemon_pk_list]
         context = {
-            'pokemon_number_list': pokemon_data['number'],
-            'pokemon_id_list': pokemon_data['id'],
-            'pokemon_name_list': pokemon_data['name'],
-            'pokemon_type_1_list': pokemon_data['type_1'],
-            'pokemon_type_2_list': pokemon_data['type_2'],
-            'pokemon_move1_list': pokemon_data['moves1'],
-            'pokemon_move2_list': pokemon_data['moves2'],
-            'pokemon_move3_list': pokemon_data['moves3'],
-            'pokemon_move4_list': pokemon_data['moves4'],
+            'pokemon_number_list': pokemon_number_list,
+            'pokemon_id_list': pokemon_id,
+            'pokemon_name_list': pokemon_name,
+            'pokemon_type_1_list': pokemon_type_1,
+            'pokemon_type_2_list': pokemon_type_2,
+            'pokemon_move1_list': pokemon_moves_1,
+            'pokemon_move2_list': pokemon_moves_2,
+            'pokemon_move3_list': pokemon_moves_3,
+            'pokemon_move4_list': pokemon_moves_4,
             'team_form': RemoveFromTeamForm,
         }
         return render(request, self.template_name, context)
