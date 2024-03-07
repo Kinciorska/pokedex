@@ -1,7 +1,9 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 
+from .utils import TYPE_CHOICES
 
 
 class Pokemon(models.Model):
@@ -12,18 +14,8 @@ class Pokemon(models.Model):
     pokemon_img = models.FilePathField(max_length=200, null=True)
     pokemon_img_shiny = models.FilePathField(max_length=200, null=True)
     pokemon_entry = models.TextField(max_length=1000, blank=True, default='')
-
-    POKEMON_TYPE_CHOICES = [('grass', 'GRASS'), ('fire', 'FIRE'), ('water', 'WATER'), ('bug', 'BUG'),
-                            ('normal', 'NORMAL'),
-                            ('poison', 'POISON'), ('electric', 'ELECTRIC'), ('ground', 'GROUND'),
-                            ('fighting', 'FIGHTING'),
-                            ('psychic', 'PSYCHIC'), ('rock', 'ROCK'), ('ghost', 'GHOST'), ('ice', 'ICE'),
-                            ('dragon', 'DRAGON'),
-                            ('dark', 'DARK'), ('steel', 'STEEL'), ('flying', 'FLYING'), ('', None)]
-
-    pokemon_type_1 = models.CharField(max_length=50, choices=POKEMON_TYPE_CHOICES)
-    pokemon_type_2 = models.CharField(max_length=50, choices=POKEMON_TYPE_CHOICES, blank=True, default='')
-
+    pokemon_type_1 = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    pokemon_type_2 = models.CharField(max_length=50, choices=TYPE_CHOICES, blank=True, default='')
 
     class Meta:
         ordering = ['pokemon_id']
@@ -61,8 +53,16 @@ class Team(models.Model):
 
 class Move(models.Model):
     move_id = models.IntegerField(unique=True)
-    move_name = models.CharField(max_length=200, unique=True)
-    move_type = models.CharField(max_length=200)
+    move_name = models.CharField(max_length=100, unique=True)
+    move_type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    accuracy_validator = [MinValueValidator(0), MaxValueValidator(100)]
+    move_accuracy = models.SmallIntegerField(validators=accuracy_validator, null=True)
+    move_pp = models.SmallIntegerField(null=True)
+    priority_validator = [MinValueValidator(-8), MaxValueValidator(8)]
+    move_priority = models.SmallIntegerField(validators=priority_validator, null=True)
+    move_power = models.SmallIntegerField(null=True)
+    move_damage_class = models.CharField(max_length=100, null=True)
+    move_entry = models.TextField(max_length=1000, null=True, blank=True)
 
     def __str__(self):
         return self.move_name
