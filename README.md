@@ -66,12 +66,12 @@ Start the worker and the beat using
 docker-compose run web celery -A pokedex worker --beat --scheduler django --loglevel=info
 ```
 
-### Save all the Pokémon to the db:
-Start the create_all_pokemon task using
+### Save all the moves and all the Pokémon to the database:
+Start the "create_all_pokemon" and "create_all_moves" tasks using
 ```
 docker-compose run web python manage.py shell
->>> from pokemons.tasks import create_all_pokemon
->>> create_all_pokemon()
+>>> from pokemons.tasks import "task_name"
+>>> "task_name()"
 ```
 
 ### Technologies
