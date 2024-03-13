@@ -16,10 +16,21 @@ schedule, created = IntervalSchedule.objects.update_or_create(
     period=IntervalSchedule.DAYS,
 )
 
+schedule_moves, created = IntervalSchedule.objects.update_or_create(
+    every=1,
+    period=IntervalSchedule.DAYS,
+)
+
 PeriodicTask.objects.update_or_create(
     interval=schedule,
     name='Updating pokemon data',
     task='pokemons.tasks.update_all_pokemon',
+)
+
+PeriodicTask.objects.update_or_create(
+    interval=schedule_moves,
+    name='Updating moves data',
+    task='pokemons.tasks.update_all_moves',
 )
 
 @shared_task(name='create_all_pokemon')
@@ -51,17 +62,17 @@ def create_all_pokemon():
         except IndexError:
             pokemon_type_2 = ''
 
-        if Pokemon(pokemon_type_1=pokemon_type_1, pokemon_type_2=pokemon_type_2).clean():
-            Pokemon.objects.create(
-                pokemon_id=pokemon_id,
-                pokemon_name=pokemon_name,
-                pokemon_height=pokemon_height,
-                pokemon_weight=pokemon_weight,
-                pokemon_img=pokemon_img,
-                pokemon_img_shiny=pokemon_img_shiny,
-                pokemon_type_1=pokemon_type_1,
-                pokemon_type_2=pokemon_type_2,
-                pokemon_entry=flavor_text)
+        Pokemon.objects.create(
+            pokemon_id=pokemon_id,
+            pokemon_name=pokemon_name,
+            pokemon_height=pokemon_height,
+            pokemon_weight=pokemon_weight,
+            pokemon_img=pokemon_img,
+            pokemon_img_shiny=pokemon_img_shiny,
+            pokemon_type_1=pokemon_type_1,
+            pokemon_type_2=pokemon_type_2,
+            pokemon_entry=flavor_text
+        )
 
 
 @shared_task(name='update_all_pokemon')
