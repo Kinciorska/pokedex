@@ -9,8 +9,8 @@ from .utils import TYPE_CHOICES
 class Pokemon(models.Model):
     pokemon_id = models.IntegerField(unique=True)
     pokemon_name = models.CharField(max_length=100, unique=True)
-    pokemon_height = models.IntegerField()
-    pokemon_weight = models.IntegerField()
+    pokemon_height = models.IntegerField(default=1)
+    pokemon_weight = models.IntegerField(default=1)
     pokemon_img = models.FilePathField(max_length=200, null=True)
     pokemon_img_shiny = models.FilePathField(max_length=200, null=True)
     pokemon_entry = models.TextField(max_length=1000, blank=True, default='')
@@ -22,8 +22,8 @@ class Pokemon(models.Model):
 
 
 class FavouritePokemon(models.Model):
-    pokemon = models.ForeignKey(Pokemon, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    pokemon = models.ForeignKey(Pokemon, on_delete=models.CASCADE, default=1)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
 
     class Meta:
         verbose_name_plural = "Favourite Pokemons"
@@ -34,7 +34,7 @@ class FavouritePokemon(models.Model):
 
 class Team(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    pokemon_id = models.ManyToManyField(Pokemon, related_name='pokemon')
+    pokemon = models.ManyToManyField(Pokemon, related_name='pokemon_in_team')
     pokemon_number = models.IntegerField()
 
     class Meta:
@@ -75,7 +75,7 @@ class PokemonInTeamQuerySet(models.QuerySet):
         return self.filter(pokemon_id__in=pokemon_pk)
 
 
-class PokemonMoves(models.Model):
+class UserPokemonMoves(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     move_number = models.SmallIntegerField()
     pokemon = models.ForeignKey(Pokemon, on_delete=models.CASCADE)
@@ -94,3 +94,8 @@ class PokemonMoves(models.Model):
 
     def __str__(self):
         return str(self.move)
+
+
+class PokemonMoves(models.Model):
+    pokemon = models.ManyToManyField(Pokemon, related_name='pokemon')
+    move = models.ManyToManyField(Move, related_name='move')

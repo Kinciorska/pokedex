@@ -20,7 +20,7 @@ from rest_framework import routers
 
 from website.views import HomePageView, RegisterView, LoginView, LogoutView, UserViewSet, GroupViewSet
 from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList, PokemonDetail, MoveViewSet, \
-    PokemonMovesList
+    UserPokemonMovesList
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -38,7 +38,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('pokemons/', include('pokemons.urls')),
-    path('pokemon_moves_list/', PokemonMovesList.as_view(), name='pokemon_moves'),
+    path('pokemon_moves_list/', UserPokemonMovesList.as_view(), name='pokemon_moves'),
     path('team/', TeamMovesList.as_view(), name='team'),
     path('pokemon_detail/<pokemon_name>/', PokemonDetail.as_view(), name='pokemon_detail')
 ]

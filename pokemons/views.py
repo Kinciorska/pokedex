@@ -21,8 +21,8 @@ from urllib.parse import urljoin
 from .utils import get_pokemon_id, get_move_details, POKE_API_ENDPOINT, POKEMON, MOVES, POKEMON_SPECIES, TYPES
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm, \
     AddMoveForm, RemoveMoveForm
-from .models import Pokemon, FavouritePokemon, Team, Move, PokemonMoves
-from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, \
+from .models import Pokemon, FavouritePokemon, Team, Move, UserPokemonMoves
+from .serializers import PokemonSerializer, TeamSerializer, UserPokemonMovesSerializer, FavouritePokemonSerializer, \
     MoveSerializer
 
 
@@ -54,7 +54,7 @@ class PokemonView(View):
             pokemon_pk = getattr(pokemon, 'id')
             is_favourite = FavouritePokemon.objects.filter(pokemon=pokemon, user=user).exists()
             team_full = Team.objects.filter(user=user).count() == 6
-            moves_full = PokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).count() == 4
+            moves_full = UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).count() == 4
             move_names = self.get_chosen_moves_list(user, pokemon)
 
         context = {'pokemon': pokemon,
@@ -82,13 +82,13 @@ class PokemonView(View):
             pokemon_in_team = Team(user=user, pokemon_number=missing_number)
             pokemon_in_team.save()
             pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
-            pokemon_in_team.pokemon_id.add(pokemon)
+            pokemon_in_team.pokemon.add(pokemon)
             return
         messages.error(request, "There are already 6 pokemons in your team")
         return
 
     def get_move_number(self, request, pokemon):
-        existing_numbers = (PokemonMoves.objects.filter(user=request.user, pokemon=pokemon)).values_list('move_number',
+        existing_numbers = (UserPokemonMoves.objects.filter(user=request.user, pokemon=pokemon)).values_list('move_number',
                                                                                                  flat=True)
         match existing_numbers.count():
 
@@ -101,7 +101,7 @@ class PokemonView(View):
                 return
 
     def get_chosen_moves_list(self, user, pokemon_pk):
-        move_numbers = PokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id', flat=True)
+        move_numbers = UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id', flat=True)
         move_names_query = Move.objects.filter(pk__in=move_numbers).all()
         move_names = [str(name) for name in move_names_query]
         return move_names
@@ -141,10 +141,10 @@ class PokemonView(View):
                 )
                 move = move[0]
                 number = self.get_move_number(request, pokemon)
-                if PokemonMoves.objects.filter(user=user, pokemon=pokemon, move=move).exists():
+                if UserPokemonMoves.objects.filter(user=user, pokemon=pokemon, move=move).exists():
                     messages.error(request, "This move is already assigned to this pokemon")
                     return
-                pokemon_move = PokemonMoves(user=user, move_number=number, pokemon=pokemon, move=move)
+                pokemon_move = UserPokemonMoves(user=user, move_number=number, pokemon=pokemon, move=move)
                 pokemon_move.save()
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
@@ -153,7 +153,7 @@ class PokemonView(View):
                 pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
                 move_name = request.POST['move_name']
                 move = get_object_or_404(Move, move_name=move_name)
-                pokemon_move = PokemonMoves.objects.get(user=request.user, pokemon=pokemon, move=move)
+                pokemon_move = UserPokemonMoves.objects.get(user=request.user, pokemon=pokemon, move=move)
                 pokemon_move.delete()
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
@@ -175,9 +175,7 @@ class PokemonTeamView(View):
 
     def get_move(self, user, pk, move_number):
         try:
-            pokemon_move = PokemonMoves.objects.get(user=user, pokemon_id=pk, move_number=move_number)
-            print(type(pokemon_move.move))
-            print(pokemon_move.move)
+            pokemon_move = UserPokemonMoves.objects.get(user=user, pokemon_id=pk, move_number=move_number)
             move = pokemon_move.move
         except ObjectDoesNotExist:
             move = ''
@@ -187,10 +185,8 @@ class PokemonTeamView(View):
     def get(self, request):
         user = request.user
         all_pokemons = (Team.objects.filter(user=user))
-        pokemon_number = all_pokemons.values_list('pokemon_number', flat=True)
-        pokemon_number_list = list(pokemon_number)
-        pokemon_pk = all_pokemons.values_list('pokemon_id', flat=True)
-        pokemon_pk_list = list(pokemon_pk)
+        pokemon_pk_list = list(Team.objects.filter(user=user).values_list('pokemon', flat=True))
+        pokemon_number_list = list(all_pokemons.values_list('pokemon_number', flat=True))
         pokemon_id = [getattr(Pokemon.objects.get(id=pk), 'pokemon_id') for pk in pokemon_pk_list]
         pokemon_name = [getattr(Pokemon.objects.get(id=pk), 'pokemon_name')for pk in pokemon_pk_list]
         pokemon_type_1 = [getattr(Pokemon.objects.get(id=pk), 'pokemon_type_1') for pk in pokemon_pk_list]
@@ -248,7 +244,6 @@ class FavouritePokemonView(ListView):
 
     @method_decorator(login_required(login_url='/website/login/'))
     def get(self, request):
-        user = request.user
         pokemons = (FavouritePokemon.objects.filter(user=request.user))
         context = {'pokemons': pokemons}
         return render(request, self.template_name, context)
@@ -312,7 +307,7 @@ class TeamMovesList(ListAPIView):
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class_Team = TeamSerializer
-    serializer_class_PokemonMove = PokemonMovesSerializer
+    serializer_class_UserPokemonMove = UserPokemonMovesSerializer
 
     def get_queryset_team(self, user):
         """
@@ -320,18 +315,18 @@ class TeamMovesList(ListAPIView):
         """
         return Team.objects.filter(user=user)
 
-    def get_queryset_pokemonmove(self, user):
+    def get_queryset_userpokemonmove(self, user):
         """
         This queryset should return a list of all the moves of Pokémon in the team of the user.
         """
-        return PokemonMoves.objects.in_team(user).filter(user=user)
+        return UserPokemonMoves.objects.in_team(user).filter(user=user)
 
     def list(self, request, *args, **kwargs):
         user = self.request.user
         team = self.serializer_class_Team(self.get_queryset_team(user), many=True)
-        move = self.serializer_class_PokemonMove(self.get_queryset_pokemonmove(user), many=True)
+        move = self.serializer_class_UserPokemonMove(self.get_queryset_userpokemonmove(user), many=True)
         data = {'Team': team.data,
-                'Pokemon moves:': move.data
+                'User Pokemon moves:': move.data
                 }
         return Response(data)
 
@@ -420,7 +415,7 @@ class MoveViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class PokemonMovesList(APIView):
+class UserPokemonMovesList(APIView):
     """
     API endpoint that allows to view the Pokémon and their assigned moves.
     """
@@ -430,8 +425,8 @@ class PokemonMovesList(APIView):
         """
         This view should return a list of all the Pokémon and their moves, filtered by the current user.
         """
-        pokemon_moves = PokemonMoves.objects.filter(user=request.user)
-        serialized_pokemon_moves = PokemonMovesSerializer(pokemon_moves, many=True)
+        pokemon_moves = UserPokemonMoves.objects.filter(user=request.user)
+        serialized_pokemon_moves = UserPokemonMovesSerializer(pokemon_moves, many=True)
         return Response(serialized_pokemon_moves.data)
 
 

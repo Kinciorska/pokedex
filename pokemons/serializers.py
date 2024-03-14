@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Pokemon, Team, FavouritePokemon, Move, PokemonMoves
+from .models import Pokemon, Team, FavouritePokemon, Move, UserPokemonMoves
 
 
 class PokemonSerializer(serializers.HyperlinkedModelSerializer):
@@ -30,12 +30,12 @@ class MoveSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['move_id', 'move_name', 'move_type']
 
 
-class PokemonMovesSerializer(serializers.HyperlinkedModelSerializer):
+class UserPokemonMovesSerializer(serializers.HyperlinkedModelSerializer):
     pokemon = PokemonSerializer(read_only=True, many=False)
     move = MoveSerializer(read_only=True, many=False)
 
     class Meta:
-        model = PokemonMoves
+        model = UserPokemonMoves
         fields = ['pokemon', 'move_number', 'move']
         depth = 1
 
