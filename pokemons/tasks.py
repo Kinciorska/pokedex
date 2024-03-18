@@ -2,13 +2,11 @@ import requests
 
 from celery import shared_task
 
-# from django.core.exceptions import ObjectDoesNotExist
-
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from urllib.parse import urljoin
 
-from .models import Pokemon, Move
+from .models import Pokemon, Move, PokemonMoves
 from .utils import POKE_API_ENDPOINT, POKEMON, MOVES
 
 schedule, created = IntervalSchedule.objects.update_or_create(
@@ -193,3 +191,17 @@ def update_all_moves():
                 'move_entry': flavor_text,
             }
         )
+
+@shared_task(name='create_pokemon_moves')
+def create_pokemon_moves():
+    for pokemon in Pokemon.objects.all():
+        pokemon_id = getattr(pokemon, 'pokemon_id')
+        url = urljoin(POKE_API_ENDPOINT + POKEMON, str(pokemon_id))
+        pokemon_json = requests.get(url).json()
+        pokemon_moves_list = pokemon_json['moves']
+        for move in pokemon_moves_list:
+            move_for_pokemon = Move.objects.get(move_name=move['move']['name'])
+            pokemon_moves = PokemonMoves()
+            pokemon_moves.save()
+            pokemon_moves.pokemon.add(pokemon)
+            pokemon_moves.move.add(move_for_pokemon)
