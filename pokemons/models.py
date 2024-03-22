@@ -71,7 +71,7 @@ class Move(models.Model):
 class PokemonInTeamQuerySet(models.QuerySet):
     def in_team(self, user):
         pokemon_pk_query = Team.objects.filter(user=user)
-        pokemon_pk = list(pokemon_pk_query.values_list('pokemon_id', flat=True))
+        pokemon_pk = list(pokemon_pk_query.values_list('pokemon', flat=True))
         return self.filter(pokemon_id__in=pokemon_pk)
 
 

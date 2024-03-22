@@ -21,22 +21,28 @@ from urllib.parse import urljoin
 from .utils import get_pokemon_id, get_move_details, POKE_API_ENDPOINT, POKEMON, MOVES, POKEMON_SPECIES, TYPES
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, RemoveFromFavouritesForm, \
     AddMoveForm, RemoveMoveForm
-from .models import Pokemon, FavouritePokemon, Team, Move, UserPokemonMoves
+from .models import Pokemon, FavouritePokemon, Team, Move, UserPokemonMoves, PokemonMoves
 from .serializers import PokemonSerializer, TeamSerializer, UserPokemonMovesSerializer, FavouritePokemonSerializer, \
     MoveSerializer
 
 
 class HomePageView(ListView):
+    """View class displaying all Pokémon, paginated by 20 per page."""
+
     template_name = 'pokemons/home.html'
     paginate_by = 20
     model = Pokemon
 
 
 class PokemonView(View):
+    """View class displaying information about a Pokémon and customization options."""
+
     template_name = 'pokemons/pokemon.html'
     model = Pokemon
 
     def get(self, request, id_or_name):
+        """Returns information about a Pokémon and the forms to assign and un-assign moves, add to team and add to favourites."""
+
         url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
         pokemon = requests.get(url).json()
         pokemon_types_list = pokemon['types']
@@ -50,7 +56,7 @@ class PokemonView(View):
         if request.user.is_authenticated:
             user = request.user
             pokemon_id = pokemon['id']
-            pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
+            pokemon = self.model.objects.get(pokemon_id=pokemon_id)
             pokemon_pk = getattr(pokemon, 'id')
             is_favourite = FavouritePokemon.objects.filter(pokemon=pokemon, user=user).exists()
             team_full = Team.objects.filter(user=user).count() == 6
@@ -74,6 +80,8 @@ class PokemonView(View):
 
     @method_decorator(login_required(login_url='/website/login/'))
     def save_in_team(self, request, pokemon_id):
+        """Saves the given Pokémon in the team of the user, if there are 6 Pokémon already, it returns an error."""
+
         user = request.user
         existing_numbers = (Team.objects.filter(user=user)).values_list('pokemon_number', flat=True)
         if existing_numbers.count() != 6:
@@ -81,13 +89,17 @@ class PokemonView(View):
             missing_number = list(numbers - set(existing_numbers))[0]
             pokemon_in_team = Team(user=user, pokemon_number=missing_number)
             pokemon_in_team.save()
-            pokemon = Pokemon.objects.get(pokemon_id=pokemon_id)
+            pokemon = self.model.objects.get(pokemon_id=pokemon_id)
             pokemon_in_team.pokemon.add(pokemon)
             return
         messages.error(request, "There are already 6 pokemons in your team")
         return
 
     def get_move_number(self, request, pokemon):
+        """
+        Returns the first number available for saving a move for a Pokémon, when there are 4 moves already assigned
+        it returns an error.
+        """
         existing_numbers = (UserPokemonMoves.objects.filter(user=request.user, pokemon=pokemon)).values_list('move_number',
                                                                                                  flat=True)
         match existing_numbers.count():
@@ -101,6 +113,8 @@ class PokemonView(View):
                 return
 
     def get_chosen_moves_list(self, user, pokemon_pk):
+        """Returns the list of moves assigned to a Pokémon."""
+
         move_numbers = UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id', flat=True)
         move_names_query = Move.objects.filter(pk__in=move_numbers).all()
         move_names = [str(name) for name in move_names_query]
@@ -108,6 +122,10 @@ class PokemonView(View):
 
 
     def post(self, request, id_or_name):
+        """
+        Depending on the form name provided from the Pokémon detail view page, it adds the Pokémon to the user's team,
+        adds it to favourites or assign and un-assign moves to a Pokémon.
+        """
         query_dict = request.POST.dict()
         query = list(query_dict)
         form = query[2]
@@ -171,11 +189,16 @@ class PokemonView(View):
 
 
 class PokemonTeamView(View):
+    """View class displaying information about Pokémon saved in their team by the user."""
+
     template_name = 'pokemons/pokemon_team.html'
 
-    def get_move(self, user, pk, move_number):
+    def get_move(self, user, pokemon_pk, move_number):
+        """
+        Returns the name of the move of the given Pokémon, if no move is assigned to it returns an empty string.
+        """
         try:
-            pokemon_move = UserPokemonMoves.objects.get(user=user, pokemon_id=pk, move_number=move_number)
+            pokemon_move = UserPokemonMoves.objects.get(user=user, pokemon_id=pokemon_pk, move_number=move_number)
             move = pokemon_move.move
         except ObjectDoesNotExist:
             move = ''
@@ -183,6 +206,8 @@ class PokemonTeamView(View):
 
     @method_decorator(login_required(login_url='/website/login/'))
     def get(self, request):
+        """Returns the number, name, types and moves of Pokémon saved in the user's team."""
+
         user = request.user
         all_pokemons = (Team.objects.filter(user=user))
         pokemon_pk_list = list(Team.objects.filter(user=user).values_list('pokemon', flat=True))
@@ -191,10 +216,10 @@ class PokemonTeamView(View):
         pokemon_name = [getattr(Pokemon.objects.get(id=pk), 'pokemon_name')for pk in pokemon_pk_list]
         pokemon_type_1 = [getattr(Pokemon.objects.get(id=pk), 'pokemon_type_1') for pk in pokemon_pk_list]
         pokemon_type_2 = [getattr(Pokemon.objects.get(id=pk), 'pokemon_type_2') for pk in pokemon_pk_list]
-        pokemon_moves_1 = [self.get_move(user, pk, 1) for pk in pokemon_pk_list]
-        pokemon_moves_2 = [self.get_move(user, pk, 2) for pk in pokemon_pk_list]
-        pokemon_moves_3 = [self.get_move(user, pk, 3) for pk in pokemon_pk_list]
-        pokemon_moves_4 = [self.get_move(user, pk, 4) for pk in pokemon_pk_list]
+        pokemon_moves_1 = [self.get_move(user, pokemon_pk, 1) for pokemon_pk in pokemon_pk_list]
+        pokemon_moves_2 = [self.get_move(user, pokemon_pk, 2) for pokemon_pk in pokemon_pk_list]
+        pokemon_moves_3 = [self.get_move(user, pokemon_pk, 3) for pokemon_pk in pokemon_pk_list]
+        pokemon_moves_4 = [self.get_move(user, pokemon_pk, 4) for pokemon_pk in pokemon_pk_list]
         context = {
             'pokemon_number_list': pokemon_number_list,
             'pokemon_id_list': pokemon_id,
@@ -211,6 +236,8 @@ class PokemonTeamView(View):
 
     @method_decorator(login_required(login_url='/website/login/'))
     def post(self, request):
+        """Removes the given Pokémon from the user's team."""
+
         pokemon_number = request.POST.get('pokemon_number')
         pokemon_number = int(pokemon_number)
         team_pk = Team.objects.get(user=request.user, pokemon_number=pokemon_number)
@@ -219,6 +246,8 @@ class PokemonTeamView(View):
 
 
 class SearchPokemonView(FormView):
+    """View form allowing to search for a Pokémon using its name or id."""
+
     template_name = 'pokemons/search.html'
     form_class = SearchPokemonForm
 
@@ -239,6 +268,8 @@ class SearchPokemonView(FormView):
 
 
 class FavouritePokemonView(ListView):
+    """View class displaying Pokémon saved as favourites by the user."""
+
     model = FavouritePokemon
     template_name = 'pokemons/favourite_pokemon.html'
 
@@ -250,6 +281,8 @@ class FavouritePokemonView(ListView):
 
     @method_decorator(login_required(login_url='/website/login/'))
     def post(self, request):
+        """Removes the given Pokémon from the user's favourites."""
+
         pokemon_id = request.POST.get('pokemon_id')
         pokemon_id = int(pokemon_id)
         pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
@@ -258,67 +291,41 @@ class FavouritePokemonView(ListView):
         return redirect('pokemons:favourite_pokemon')
 
 
-class AddMoveToPokemonView(View):
-    model = Pokemon
-
-    @method_decorator(login_required(login_url='/website/login/'))
-    def get(self, request, pokemon, move):
-        user = request.user
-        if self.model.objects.filter(user=user, name=pokemon).count() != 4:
-            for move_counter in range(4):
-                if not self.model.objects.filter(move_number=move_counter):
-                    move_number = move_counter
-            move = self.model(name=pokemon, user=user, move=move, move_number=move_number)
-            move.save()
-            return redirect('pokemons:pokemon_detail', pokemon)
-        else:
-            messages.error(request, "You already chose 4 moves for this pokemon")
-            return redirect('pokemons:pokemon_detail', pokemon)
-
-
 class PokemonViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows a Pokémon to be viewed.
-    """
+    """API endpoint that allows a Pokémon to be viewed."""
+
     queryset = Pokemon.objects.all()
     serializer_class = PokemonSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class FavouritePokemonViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows to view Pokémon set as favourite.
-    """
+    """API endpoint that allows to view Pokémon set as favourite."""
+
     serializer_class = FavouritePokemonSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """
-        This view should return a list of all the Pokémon set as
-        favourites by the user.
-        """
+        """This view should return all the Pokémon set as favourites by the user."""
         favourite_pokemons = FavouritePokemon.objects.filter(user=self.request.user)
         return favourite_pokemons
 
 
 class TeamMovesList(ListAPIView):
-    """
-    API endpoint that allows to view the Pokémon added to the team, and their assigned moves.
-    """
+    """API endpoint that allows to view the Pokémon added to the team, and their assigned moves."""
+
     permission_classes = [permissions.IsAuthenticated]
     serializer_class_Team = TeamSerializer
     serializer_class_UserPokemonMove = UserPokemonMovesSerializer
 
     def get_queryset_team(self, user):
-        """
-        This queryset should return a list of all the Pokémon in the team of the user.
-        """
+        """This queryset should return all the Pokémon in the team of the user."""
+
         return Team.objects.filter(user=user)
 
     def get_queryset_userpokemonmove(self, user):
-        """
-        This queryset should return a list of all the moves of Pokémon in the team of the user.
-        """
+        """This queryset should return all the moves of Pokémon in the team of the user."""
+
         return UserPokemonMoves.objects.in_team(user).filter(user=user)
 
     def list(self, request, *args, **kwargs):
@@ -331,36 +338,9 @@ class TeamMovesList(ListAPIView):
         return Response(data)
 
 
-class PokemonDetail(APIView):
-    """
-        API endpoint that retrieves pokemon data from the PokeAPI.
-        """
-
-    def get(self, request, pokemon_name):
-        pokemon_url = urljoin(POKE_API_ENDPOINT + POKEMON, pokemon_name)
-        pokemon_species_url = urljoin(POKE_API_ENDPOINT + POKEMON_SPECIES, pokemon_name)
-        data = requests.get(pokemon_species_url).json()
-        flavor_text = data['flavor_text_entries'][0]['flavor_text']
-        pokemon_data = requests.get(pokemon_url).json()
-        pokemon_id = pokemon_data['id']
-        pokemon_types_list = pokemon_data['types']
-        pokemon_abilities_list = pokemon_data['abilities']
-        pokemon_moves_list = pokemon_data['moves']
-        pokemon_img = pokemon_data['sprites']['other']['official-artwork']['front_default']
-        pokemon_img_shiny = pokemon_data['sprites']['other']['official-artwork']['front_shiny']
-        data = {'pokemon_name': pokemon_name,
-                'pokemon_id': pokemon_id,
-                'pokemon_types_list': pokemon_types_list,
-                'pokemon_abilities_list': pokemon_abilities_list,
-                'pokemon_moves_list': pokemon_moves_list,
-                'pokemon_img': pokemon_img,
-                'pokemon_img_shiny': pokemon_img_shiny,
-                'pokemon_entry': flavor_text,
-                }
-        return Response(data)
-
-
 class MovesView(TemplateView):
+    """View class displaying all moves, paginated by 30 per page."""
+
     template_name = 'pokemons/pokemon_moves.html'
     paginate_by = 30
 
@@ -375,6 +355,8 @@ class MovesView(TemplateView):
 
 
 class MoveDetailView(TemplateView):
+    """View class displaying information about a move."""
+
     template_name = 'pokemons/move_detail.html'
 
     def get(self, request, id_or_name):
@@ -407,30 +389,28 @@ class MoveDetailView(TemplateView):
 
 
 class MoveViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows all moves to be viewed.
-    """
+    """API endpoint that allows all moves to be viewed."""
+
     queryset = Move.objects.all()
     serializer_class = MoveSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class UserPokemonMovesList(APIView):
-    """
-    API endpoint that allows to view the Pokémon and their assigned moves.
-    """
+    """API endpoint that allows to view the Pokémon and their assigned moves."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, format=None):
-        """
-        This view should return a list of all the Pokémon and their moves, filtered by the current user.
-        """
+        """This view should return a list of all the Pokémon and their moves, filtered by the current user."""
         pokemon_moves = UserPokemonMoves.objects.filter(user=request.user)
         serialized_pokemon_moves = UserPokemonMovesSerializer(pokemon_moves, many=True)
         return Response(serialized_pokemon_moves.data)
 
 
 class PokemonTypeDetailView(TemplateView):
+    """View class displaying information about a type."""
+
     template_name = 'pokemons/type_details.html'
 
     def get_context_data(self, id_or_name, **kwargs):
@@ -450,6 +430,8 @@ class PokemonTypeDetailView(TemplateView):
 
 
 class PokemonTypesView(TemplateView):
+    """View class displaying all types"""
+
     template_name = 'pokemons/pokemon_types.html'
 
     def get_context_data(self, **kwargs):
