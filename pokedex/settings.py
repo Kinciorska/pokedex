@@ -41,23 +41,38 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
+CELERY = [
+    'celery',
+    'django_celery_results',
+    'django_celery_beat',
+]
+
+CRISPY = [
+    'crispy_forms',
+    'crispy_bootstrap5',
+]
+
+DJANGO = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+]
+
+DRF = [
     'rest_framework',
-    'celery',
-    'django_celery_results',
-    'django_celery_beat',
     'corsheaders',
-    'crispy_forms',
-    'crispy_bootstrap5',
+]
+
+
+POKEDEX = [
     'pokemons',
     'website',
 ]
+
+INSTALLED_APPS = [*CELERY, *CRISPY, *DJANGO, *DRF, *POKEDEX]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 
@@ -160,6 +175,14 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery properties
-BROKER_URL = f"{os.getenv('RABBITMQ_PROTOCOL')}://{os.getenv('RABBITMQ_USER')}:{os.getenv('RABBITMQ_PASSWORD')}@{os.getenv('RABBITMQ_HOST')}:{os.getenv('RABBITMQ_PORT')}//"
+
+PROTOCOL = os.getenv('RABBITMQ_PROTOCOL')
+USER = os.getenv('RABBITMQ_USER')
+PASSWORD = os.getenv('RABBITMQ_PASSWORD')
+HOST = os.getenv('RABBITMQ_HOST')
+PORT = os.getenv('RABBITMQ_PORT')
+
+
+BROKER_URL = f"{PROTOCOL}://{USER}:{PASSWORD}@{HOST}:{PORT}//"
 RESULT_BACKEND = 'django-db'
 BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
