@@ -29,13 +29,16 @@
         </td>
         <td>{% for moves in moves_in_type %}
             <li>
-                {{ moves.name }}
+                <a href="{% url 'pokemons:move_detail' moves.name %}">
+                    {{ moves.name }}
+                </a>
             </li>
+
             {% endfor %}
         </td>
         <td>{% for type in double_damage_from %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type.name %}">
+                <a href="{% url 'pokemons:type_detail' type.name %}">
                     {{ type.name }}
                 </a>
             </li>
@@ -43,7 +46,7 @@
         </td>
         <td>{% for type in double_damage_to %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type.name %}">
+                <a href="{% url 'pokemons:type_detail' type.name %}">
                     {{ type.name }}
                 </a>
             </li>
@@ -51,7 +54,7 @@
         </td>
         <td>{% for type in half_damage_from %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type.name %}">
+                <a href="{% url 'pokemons:type_detail' type.name %}">
                     {{ type.name }}
                 </a>
             </li>
@@ -59,7 +62,7 @@
         </td>
         <td>{% for type in half_damage_to %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type.name %}">
+                <a href="{% url 'pokemons:type_detail' type.name %}">
                     {{ type.name }}
                 </a>
             </li>
@@ -67,7 +70,7 @@
         </td>
         <td>{% for type in no_damage_from %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type.name %}">
+                <a href="{% url 'pokemons:type_detail' type.name %}">
                     {{ type.name }}
                 </a>
             </li>
@@ -75,7 +78,7 @@
         </td>
         <td>{% for type in no_damage_to %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type.name %}">
+                <a href="{% url 'pokemons:type_detail' type.name %}">
                     {{ type.name }}
                 </a>
             </li>

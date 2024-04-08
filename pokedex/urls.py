@@ -31,10 +31,10 @@ router.register(r'favourite', FavouritePokemonViewSet, basename='favourite_list'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('home', HomePageView.as_view(), name='home'),
-    path('register', RegisterView.as_view(), name='register'),
-    path('login', LoginView.as_view(), name='login'),
-    path('logout', LogoutView.as_view(), name='logout'),
+    path('home/', HomePageView.as_view(), name='home'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('', include(router.urls)),
     path('-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('pokemons/', include('pokemons.urls')),

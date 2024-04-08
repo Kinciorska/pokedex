@@ -8,7 +8,7 @@
 <ul>
     {% for move in page_obj %}
     <li>
-        <a href="{% url 'pokemons:move_details' move.name %}">
+        <a href="{% url 'pokemons:move_detail' move.name %}">
             {{ move.name }}
         </a>
     </li>

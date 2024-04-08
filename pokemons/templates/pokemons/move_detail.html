@@ -28,7 +28,9 @@
             <li>{{ pp }}</li>
         </td>
         <td>
-            <li>{{ type.name }}</li>
+            <li>
+                <a href="{% url 'pokemons:type_detail' type.name %}">{{ type.name }}</a>
+            </li>
         </td>
         <td>
             <li>{{ class.name }}</li>

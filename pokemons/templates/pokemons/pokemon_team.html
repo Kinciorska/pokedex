@@ -44,7 +44,7 @@
         <td>
             {% for type_1 in pokemon_type_1_list %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type_1 %}">
+                <a href="{% url 'pokemons:type_detail' type_1 %}">
                     {{ type_1 }}
                 </a>
             </li>
@@ -56,7 +56,7 @@
             <li>{{ type_2 }}</li>
             {% else %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' type_2 %}">
+                <a href="{% url 'pokemons:type_detail' type_2 %}">
                     {{ type_2 }}
                 </a>
             </li>
@@ -70,7 +70,7 @@
             <li>{{ move }}</li>
             {% else %}
             <li>
-                <a href="{% url 'pokemons:move_details' move %}">
+                <a href="{% url 'pokemons:move_detail' move %}">
                     {{ move }}
                 </a>
             </li>
@@ -83,7 +83,7 @@
             <li>{{ move }}</li>
             {% else %}
             <li>
-                <a href="{% url 'pokemons:move_details' move %}">
+                <a href="{% url 'pokemons:move_detail' move %}">
                     {{ move }}
                 </a>
             </li>
@@ -96,7 +96,7 @@
             <li>{{ move }}</li>
             {% else %}
             <li>
-                <a href="{% url 'pokemons:move_details' move %}">
+                <a href="{% url 'pokemons:move_detail' move %}">
                     {{ move }}
                 </a>
             </li>
@@ -109,7 +109,7 @@
             <li>{{ move }}</li>
             {% else %}
             <li>
-                <a href="{% url 'pokemons:move_details' move %}">
+                <a href="{% url 'pokemons:move_detail' move %}">
                     {{ move }}
                 </a>
             </li>

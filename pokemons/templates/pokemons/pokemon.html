@@ -19,7 +19,7 @@
         <td>{{ pokemon.id }}</td>
         <td>{% for types in pokemon_types_list %}
             <li>
-                <a href="{% url 'pokemons:pokemon_type' types.type.name %}">{{ types.type.name }}</a>
+                <a href="{% url 'pokemons:type_detail' types.type.name %}">{{ types.type.name }}</a>
             </li>
             {% endfor %}
         </td>
@@ -31,7 +31,7 @@
         </td>
         <td>{% for moves in pokemon_moves_list %}
             <li>
-                <a href="{% url 'pokemons:move_details' moves.move.name %}">{{ moves.move.name }}</a>
+                <a href="{% url 'pokemons:move_detail' moves.move.name %}">{{ moves.move.name }}</a>
                 {% if user.is_authenticated %}
                     {% if moves.move.name in move_names %}
                         CHOSEN
