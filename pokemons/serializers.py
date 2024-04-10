@@ -9,19 +9,10 @@ class PokemonSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['pokemon_id', 'pokemon_name', 'pokemon_type_1', 'pokemon_type_2']
 
 
-class PokemonIdSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Pokemon
-        fields = ['pokemon_id']
-
-
-class TeamSerializer(serializers.HyperlinkedModelSerializer):
-    pokemon_id = PokemonIdSerializer(read_only=True, many=True)
-
-    class Meta:
-        model = Team
-        fields = ['pokemon_number', 'pokemon_id']
-        depth = 1
+# class PokemonIdSerializer(serializers.HyperlinkedModelSerializer):
+#     class Meta:
+#         model = Pokemon
+#         fields = ['pokemon_id']
 
 
 class MoveSerializer(serializers.HyperlinkedModelSerializer):
@@ -47,3 +38,29 @@ class FavouritePokemonSerializer(serializers.HyperlinkedModelSerializer):
         model = FavouritePokemon
         fields = ['pokemon']
         depth = 1
+
+
+class UserTeamPokemonMovesSerializer(serializers.HyperlinkedModelSerializer):
+    move = MoveSerializer(read_only=True, many=False)
+
+    class Meta:
+        model = UserPokemonMoves
+        fields = ['move_number', 'move']
+
+class PokemonInTeamSerializer(serializers.HyperlinkedModelSerializer):
+    user_moves = UserTeamPokemonMovesSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Pokemon
+        fields = ['pokemon_id', 'pokemon_name', 'pokemon_type_1', 'pokemon_type_2', 'user_moves']
+        depth = 1
+
+
+class TeamSerializer(serializers.HyperlinkedModelSerializer):
+    pokemon = PokemonInTeamSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Team
+        fields = ['pokemon_number', 'pokemon']
+        depth = 1
+

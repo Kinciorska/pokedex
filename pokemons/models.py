@@ -78,7 +78,7 @@ class PokemonInTeamQuerySet(models.QuerySet):
 class UserPokemonMoves(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     move_number = models.SmallIntegerField()
-    pokemon = models.ForeignKey(Pokemon, on_delete=models.CASCADE)
+    pokemon = models.ForeignKey(Pokemon, related_name='user_moves', on_delete=models.CASCADE)
     move = models.ForeignKey(Move, on_delete=models.CASCADE)
 
     objects = PokemonInTeamQuerySet.as_manager()

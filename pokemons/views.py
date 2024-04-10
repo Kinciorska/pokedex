@@ -306,7 +306,6 @@ class TeamMovesList(ListAPIView):
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class_Team = TeamSerializer
-    serializer_class_UserPokemonMove = UserPokemonMovesSerializer
 
     @staticmethod
     def get_queryset_team(user):
@@ -314,19 +313,10 @@ class TeamMovesList(ListAPIView):
 
         return Team.objects.filter(user=user)
 
-    @staticmethod
-    def get_queryset_userpokemonmove(user):
-        """This queryset should return all the moves of Pokémon in the team of the user."""
-
-        return UserPokemonMoves.objects.in_team(user).filter(user=user)
-
     def list(self, request, *args, **kwargs):
         user = self.request.user
         team = self.serializer_class_Team(self.get_queryset_team(user), many=True)
-        move = self.serializer_class_UserPokemonMove(self.get_queryset_userpokemonmove(user), many=True)
-        data = {'Team': team.data,
-                'User Pokemon moves:': move.data
-                }
+        data = {'Team': team.data}
         return Response(data)
 
 
