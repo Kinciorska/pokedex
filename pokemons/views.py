@@ -23,7 +23,7 @@ from .utils import get_pokemon_id, get_move_details, POKE_API_ENDPOINT, POKEMON,
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, AddMoveForm, \
     RemoveMoveForm
 from .models import Pokemon, FavouritePokemon, Team, Move, UserPokemonMoves
-from .serializers import PokemonSerializer, TeamSerializer, UserPokemonMovesSerializer, FavouritePokemonSerializer, \
+from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, \
     MoveSerializer
 
 
@@ -366,14 +366,14 @@ class MoveViewSet(viewsets.ModelViewSet):
 class UserPokemonMovesList(APIView):
     """API endpoint that allows to view the Pokémon and their assigned moves."""
 
-    model = UserPokemonMoves
+    model = Pokemon
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         """This view should return a list of all the Pokémon and their moves, filtered by the current user."""
 
-        pokemon_moves = self.model.objects.filter(user=request.user)
-        serialized_pokemon_moves = UserPokemonMovesSerializer(pokemon_moves, many=True)
+        pokemon_moves = self.model.objects.has_moves(request.user)
+        serialized_pokemon_moves = PokemonMovesSerializer(pokemon_moves, many=True)
         return Response(serialized_pokemon_moves.data)
 
 

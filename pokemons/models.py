@@ -6,6 +6,14 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from .utils import TYPE_CHOICES
 
 
+class PokemonHasMovesQuerySet(models.QuerySet):
+    def has_moves(self, user):
+        pokemon_pk_query = UserPokemonMoves.objects.filter(user=user)
+        pokemon_pk = list(pokemon_pk_query.values_list('pokemon', flat=True))
+        return self.filter(pokemon_id__in=pokemon_pk)
+
+
+
 class Pokemon(models.Model):
     pokemon_id = models.IntegerField(unique=True)
     pokemon_name = models.CharField(max_length=100, unique=True)
@@ -16,6 +24,8 @@ class Pokemon(models.Model):
     pokemon_entry = models.TextField(max_length=1000, blank=True, default='')
     pokemon_type_1 = models.CharField(max_length=50, choices=TYPE_CHOICES)
     pokemon_type_2 = models.CharField(max_length=50, choices=TYPE_CHOICES, blank=True, default='')
+
+    objects = PokemonHasMovesQuerySet.as_manager()
 
     class Meta:
         ordering = ['pokemon_id']
@@ -48,7 +58,7 @@ class Team(models.Model):
         ]
 
     def __str__(self):
-        return str(self.id)
+        return str(f"{self.pokemon_number} - {self.pokemon.pokemon_name}")
 
 
 class Move(models.Model):
