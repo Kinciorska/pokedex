@@ -14,3 +14,35 @@ a:visited {
 ul {
     list-style: none;
 }
+
+.wrap_search{
+  margin:left;
+  max-width:300px;
+}
+
+form input{
+  padding: 6px;
+  font-size: 15px;
+  border: 2px solid darkslategrey;
+  float: left;
+  width: 80%;
+  background: #f1f1f1;
+}
+
+form button{
+  float: left;
+  width: 10%;
+  padding: 7px;
+  background: darkslategrey;
+  color: white;
+  font-size: 13px;
+  border: 3px solid darkslategrey;
+  border-left: none; /* Prevent double borders */
+  cursor: pointer;
+}
+
+form.:after {
+  content: "";
+  clear: both;
+  display: table;
+}

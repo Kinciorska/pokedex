@@ -2,7 +2,8 @@ from django import forms
 
 
 class SearchPokemonForm(forms.Form):
-    id_or_name = forms.CharField(label="Name", max_length=100)
+    id_or_name = forms.CharField(label="", max_length=100, widget=forms.TextInput(attrs={'placeholder': 'Search...'}))
+
 
 
 class AddToTeamForm(forms.Form):

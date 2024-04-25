@@ -6,9 +6,17 @@
 {% block content %}
 <body>
 <h1>Search for a pokemon</h1>
-<form id="search_pokemon" method="post">
-    {{ form|crispy }}
-    {% csrf_token %}
-    <input type="submit" value="Search">
-</form>
+
+<div class="wrap_search">
+    <form id="search_request" class="search_form" method="post">
+        {{ form|crispy }}
+        {% csrf_token %}
+    <button type="submit"
+            name="search"
+            value="search">
+        <i class="fa fa-search"></i>
+    </button>
+    </form>
+</div>
+
 {% endblock%}
