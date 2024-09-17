@@ -73,6 +73,7 @@ Note that the "create_pokemon_moves" task should be executed only after creating
 
 ### Technologies
 - Django
+- DRF
 - PostgreSQL
 - Docker
 - RabbitMQ
@@ -83,4 +84,4 @@ Note that the "create_pokemon_moves" task should be executed only after creating
 This Pokémon Team Builder App is open-source and distributed under the MIT License.
 
 ##### Acknowledgements
-Special thanks to PokeAPI for providing the Pokémon data used in this app.
+Special thanks to PokéAPI for providing the Pokémon data used in this app.
