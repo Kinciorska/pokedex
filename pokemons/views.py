@@ -110,7 +110,7 @@ class PokemonView(View):
                 missing_number = list(numbers - set(existing_numbers))[0]
                 return missing_number
             case 4:
-                messages.error(request, "There are already 6 pokemons in your team")
+                messages.error(request, "There are already 4 moves assigned for this Pokémon")
                 return
 
     @staticmethod
