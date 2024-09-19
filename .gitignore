@@ -109,6 +109,7 @@ __pypackages__/
 envs/.env
 envs/.django
 envs/.postgres
+envs/.rabbitmq
 .venv
 env/
 venv/
