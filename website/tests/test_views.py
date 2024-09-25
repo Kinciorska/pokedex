@@ -44,3 +44,43 @@ class RegisterViewTestsCase(TestCase):
         c = Client()
         logged_in = c.login(username='testuser', password='FQ8fgxesdzUz')
         self.assertTrue(logged_in)
+
+class LoginViewTestsCase(TestCase):
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(username='testuser',
+                                             email='testuser@email.com',
+                                             password='FQ8fgxesdzUz'
+                                             )
+        self.form_data = {'username': 'testuser',
+                          'password': 'FQ8fgxesdzUz'
+                          }
+
+    def test_login_page_url(self):
+        response = self.client.get("/login/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='website/login.html')
+
+    def test_login_page_view_name(self):
+        response = self.client.get(reverse('login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='website/login.html')
+
+    def test_login_logging_in(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        c = Client()
+        logged_in = c.login(username='testuser', password='FQ8fgxesdzUz')
+        self.assertTrue(logged_in)
+
+    def test_login_form_successful(self):
+        response = self.client.post(reverse('login'), data=self.form_data)
+        self.assertEqual(response.status_code, 302)
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        username = self.form_data['username']
+        self.assertIn(f'You are now logged in as {username}.', messages)
+
+    def test_login_form_unsuccessful(self):
+        self.form_data['password'] = 'wrong_password'
+        response = self.client.post(reverse('login'), data=self.form_data)
+        self.assertEqual(response.status_code, 200)
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn('Invalid username or password', messages)
