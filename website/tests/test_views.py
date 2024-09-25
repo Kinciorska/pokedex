@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -24,15 +25,17 @@ class RegisterViewTestsCase(TestCase):
     def test_register_form_successful(self):
         response = self.client.post(reverse('register'), data=self.form_data)
         self.assertEqual(response.status_code, 302)
-
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn('Registration successful.', messages)
         users = User.objects.all()
         self.assertEqual(users.count(), 1)
 
     def test_register_form_unsuccessful(self):
         self.form_data['password2'] = 'wrong_password'
         response = self.client.post(reverse('register'), data=self.form_data)
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn('Unsuccessful registration - invalid information.', messages)
         self.assertEqual(response.status_code, 200)
-
         users = User.objects.all()
         self.assertEqual(users.count(), 0)
 
