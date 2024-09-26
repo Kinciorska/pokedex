@@ -1,3 +1,5 @@
+from django.contrib import auth
+
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.test import Client, TestCase
@@ -84,3 +86,31 @@ class LoginViewTestsCase(TestCase):
         self.assertEqual(response.status_code, 200)
         messages = [m.message for m in get_messages(response.wsgi_request)]
         self.assertIn('Invalid username or password', messages)
+
+
+class LogoutViewTestsCase(TestCase):
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(username='testuser',
+                                             email='testuser@email.com',
+                                             password='FQ8fgxesdzUz'
+                                             )
+
+        self.client.post(reverse('login'), data={'username': 'testuser',
+                                                 'password': 'FQ8fgxesdzUz'
+                                                 })
+
+    def test_logout_page_url(self):
+        response = self.client.get("/logout/")
+        self.assertEqual(response.status_code, 302)
+
+    def test_logout_page_view_name(self):
+        response = self.client.get(reverse('logout'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_logout_logging_out(self):
+        self.client.get(reverse('logout'))
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+        response = self.client.get(reverse('logout'))
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertIn('You have successfully logged out.', messages)
