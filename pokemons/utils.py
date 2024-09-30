@@ -8,12 +8,12 @@ TYPES = 'type/'
 MOVES = 'move/'
 POKEMON_SPECIES = 'pokemon-species/'
 TYPE_CHOICES = [('grass', 'GRASS'), ('fire', 'FIRE'), ('water', 'WATER'), ('bug', 'BUG'),
-                            ('normal', 'NORMAL'),
-                            ('poison', 'POISON'), ('electric', 'ELECTRIC'), ('ground', 'GROUND'),
-                            ('fighting', 'FIGHTING'),
-                            ('psychic', 'PSYCHIC'), ('rock', 'ROCK'), ('ghost', 'GHOST'), ('ice', 'ICE'),
-                            ('dragon', 'DRAGON'),
-                            ('dark', 'DARK'), ('steel', 'STEEL'), ('flying', 'FLYING'), ('', None)]
+                ('normal', 'NORMAL'),
+                ('poison', 'POISON'), ('electric', 'ELECTRIC'), ('ground', 'GROUND'),
+                ('fighting', 'FIGHTING'),
+                ('psychic', 'PSYCHIC'), ('rock', 'ROCK'), ('ghost', 'GHOST'), ('ice', 'ICE'),
+                ('dragon', 'DRAGON'),
+                ('dark', 'DARK'), ('steel', 'STEEL'), ('flying', 'FLYING'), ('', None)]
 
 
 def get_pokemon_id(id_or_name):

@@ -6,6 +6,19 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 
+class HomePageTestsCase(TestCase):
+
+    def test_home_page_url(self):
+        response = self.client.get('/home/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='website/home.html')
+
+    def test_home_page_view_name(self):
+        response = self.client.get(reverse('home'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='website/home.html')
+
+
 class RegisterViewTestsCase(TestCase):
     def setUp(self) -> None:
         self.form_data = {'username': 'testuser',
@@ -15,7 +28,7 @@ class RegisterViewTestsCase(TestCase):
                           }
 
     def test_register_page_url(self):
-        response = self.client.get("/register/")
+        response = self.client.get('/register/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='website/register.html')
 
@@ -58,7 +71,7 @@ class LoginViewTestsCase(TestCase):
                           }
 
     def test_login_page_url(self):
-        response = self.client.get("/login/")
+        response = self.client.get('/login/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='website/login.html')
 
@@ -100,7 +113,7 @@ class LogoutViewTestsCase(TestCase):
                                                  })
 
     def test_logout_page_url(self):
-        response = self.client.get("/logout/")
+        response = self.client.get('/logout/')
         self.assertEqual(response.status_code, 302)
 
     def test_logout_page_view_name(self):
