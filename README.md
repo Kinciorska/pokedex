@@ -78,10 +78,11 @@ Note that the "create_pokemon_moves" task should be executed only after creating
 - Docker
 - RabbitMQ
 - Celery
+- Unittest
 
 
 #### License
-This Pokémon Team Builder App is open-source and distributed under the MIT License.
+This Pokémon Team Builder App is open-source and distributed under the GNU General Public License v3.0.
 
 ##### Acknowledgements
 Special thanks to PokéAPI for providing the Pokémon data used in this app.
