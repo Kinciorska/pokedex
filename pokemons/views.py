@@ -95,6 +95,15 @@ class PokemonView(View):
         return
 
     @staticmethod
+    def save_in_favourites(request, pokemon_id):
+        """Saves the given Pokémon as favourite for the user."""
+
+        pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+        pokemon_in_favourites = FavouritePokemon(user=request.user, pokemon=pokemon)
+        pokemon_in_favourites.save()
+        return
+
+    @staticmethod
     def get_move_number(request, pokemon):
         """
         Returns the first number available for saving a move for a Pokémon, when there are 4 moves already assigned
@@ -124,6 +133,39 @@ class PokemonView(View):
         return move_names
 
     @method_decorator(login_required(login_url='/website/login/'))
+    def add_move(self, request, pokemon_id):
+        """Adds a move to a specified Pokémon, if there are 4 moves assigned already, it returns an error."""
+
+        user = request.user
+        pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+        move_name = request.POST['move_name']
+        move_details = get_move_details(move_name)
+        move = Move.objects.get_or_create(
+            move_id=move_details[0],
+            move_name=move_name,
+            move_type=move_details[1]
+        )
+        move = move[0]
+        number = self.get_move_number(request, pokemon)
+        if UserPokemonMoves.objects.filter(user=user, pokemon=pokemon, move=move).exists():
+            messages.error(request, "This move is already assigned to this pokemon")
+            return
+        pokemon_move = UserPokemonMoves(user=user, move_number=number, pokemon=pokemon, move=move)
+        pokemon_move.save()
+        return
+
+    @method_decorator(login_required(login_url='/website/login/'))
+    def remove_move(self, request, pokemon_id):
+        """Removes a move from a specified Pokémon."""
+
+        pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+        move_name = request.POST['move_name']
+        move = get_object_or_404(Move, move_name=move_name)
+        pokemon_move = UserPokemonMoves.objects.get(user=request.user, pokemon=pokemon, move=move)
+        pokemon_move.delete()
+        return
+
+    @method_decorator(login_required(login_url='/website/login/'))
     def post(self, request, id_or_name):
         """
         Depending on the form name provided from the Pokémon detail view page, it adds the Pokémon to the user's team,
@@ -142,40 +184,17 @@ class PokemonView(View):
 
             case 'favourite_form' if AddToTeamForm(request.POST).is_valid():
                 pokemon_id = get_pokemon_id(id_or_name)
-                pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
-                pokemon_in_favourites = FavouritePokemon(user=request.user, pokemon=pokemon)
-                pokemon_in_favourites.save()
+                self.save_in_favourites(request, pokemon_id)
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
             case 'add_move_form':
-                user = request.user
                 pokemon_id = get_pokemon_id(id_or_name)
-                pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
-                move_name = request.POST['move_name']
-                move_details = get_move_details(move_name)
-                move_id = move_details[0]
-                move_type = move_details[1]
-                move = Move.objects.get_or_create(
-                    move_id=move_id,
-                    move_name=move_name,
-                    move_type=move_type,
-                )
-                move = move[0]
-                number = self.get_move_number(request, pokemon)
-                if UserPokemonMoves.objects.filter(user=user, pokemon=pokemon, move=move).exists():
-                    messages.error(request, "This move is already assigned to this pokemon")
-                    return
-                pokemon_move = UserPokemonMoves(user=user, move_number=number, pokemon=pokemon, move=move)
-                pokemon_move.save()
+                self.add_move(request, pokemon_id)
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
             case 'remove_move_form':
                 pokemon_id = get_pokemon_id(id_or_name)
-                pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
-                move_name = request.POST['move_name']
-                move = get_object_or_404(Move, move_name=move_name)
-                pokemon_move = UserPokemonMoves.objects.get(user=request.user, pokemon=pokemon, move=move)
-                pokemon_move.delete()
+                self.remove_move(request, pokemon_id)
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
             case [_]:
