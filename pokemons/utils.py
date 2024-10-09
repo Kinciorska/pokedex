@@ -17,6 +17,8 @@ TYPE_CHOICES = [('grass', 'GRASS'), ('fire', 'FIRE'), ('water', 'WATER'), ('bug'
 
 
 def get_pokemon_id(id_or_name):
+    """Returns the id of the Pokémon fetched from the PokéAPI."""
+
     url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
     pokemon = requests.get(url).json()
     pokemon_id = pokemon['id']
@@ -24,8 +26,16 @@ def get_pokemon_id(id_or_name):
 
 
 def get_move_details(move_name):
+    """Returns the move  id and type fetched from the PokéAPI."""
+
     url = urljoin(POKE_API_ENDPOINT + MOVES, move_name)
     move = requests.get(url).json()
     id = move['id']
     type = move['type']['name']
     return id, type
+
+def get_missing_number(numbers, existing_numbers):
+    """Returns the first missing number from a set of numbers."""
+
+    missing_number = list(numbers - set(existing_numbers))[0]
+    return missing_number

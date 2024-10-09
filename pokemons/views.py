@@ -19,7 +19,7 @@ from rest_framework.generics import ListAPIView
 
 from urllib.parse import urljoin
 
-from .utils import get_pokemon_id, get_move_details, POKE_API_ENDPOINT, POKEMON, MOVES, TYPES
+from .utils import get_pokemon_id, get_move_details, get_missing_number, POKE_API_ENDPOINT, POKEMON, MOVES, TYPES
 from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFavouritesForm, AddMoveForm, \
     RemoveMoveForm
 from .models import Pokemon, FavouritePokemon, Team, Move, UserPokemonMoves
@@ -81,17 +81,16 @@ class PokemonView(View):
         """Saves the given Pokémon in the team of the user, if there are 6 Pokémon already, it returns an error."""
 
         user = request.user
-        existing_numbers = (Team.objects.filter(user=user)).values_list('pokemon_number', flat=True)
+        existing_numbers = Team.objects.filter(user=user).values_list('pokemon_number', flat=True)
 
         if existing_numbers.count() == 6:
-            messages.error(request, "There are already 6 pokemons in your team")
+            messages.error(request, "There are already 6 Pokémon in your team")
             return
-        numbers = set(range(1, 7))
-        missing_number = list(numbers - set(existing_numbers))[0]
-        pokemon_in_team = Team(user=user, pokemon_number=missing_number)
-        pokemon_in_team.save()
+        missing_number = get_missing_number(numbers=set(range(1, 7)), existing_numbers=existing_numbers)
+        team = Team(user=user, pokemon_number=missing_number)
+        team.save()
         pokemon = self.model.objects.get(pokemon_id=pokemon_id)
-        pokemon_in_team.pokemon.add(pokemon)
+        team.pokemon.add(pokemon)
         return
 
     @staticmethod
@@ -115,8 +114,7 @@ class PokemonView(View):
         match existing_numbers.count():
 
             case 0 | 1 | 2 | 3:
-                numbers = set(range(1, 5))
-                missing_number = list(numbers - set(existing_numbers))[0]
+                missing_number = get_missing_number(numbers=set(range(1, 5)), existing_numbers=existing_numbers)
                 return missing_number
             case 4:
                 messages.error(request, "There are already 4 moves assigned for this Pokémon")
