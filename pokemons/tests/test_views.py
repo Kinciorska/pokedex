@@ -1,15 +1,15 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from model_bakery import baker
 from unittest.mock import patch
 
-from pokemons.models import Pokemon
 from pokemons.views import PokemonView
-
 
 class HomePageTestCase(TestCase):
 
     def test_home_page_url(self):
-        response = self.client.get("/pokemons/home/")
+        response = self.client.get('/pokemons/home/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='pokemons/home.html')
 
@@ -22,16 +22,13 @@ class HomePageTestCase(TestCase):
 class PokemonViewTestCase(TestCase):
 
     def setUp(self) -> None:
-        self.pokemon = Pokemon.objects.create(pokemon_id=1,
-                                              pokemon_name='Test Pokemon',
-                                              pokemon_height=10,
-                                              pokemon_weight=10,
-                                              pokemon_img='img_link',
-                                              pokemon_img_shiny='img_shiny_link',
-                                              pokemon_entry='test pokemon entry',
-                                              pokemon_type_1='grass',
-                                              pokemon_type_2='water'
-                                              )
+        self.pokemon = baker.make('pokemons.Pokemon',
+                                  pokemon_id=1)
+        self.user = User.objects.create_user(username='testuser',
+                                             email='testuser@email.com',
+                                             password='FQ8fgxesdzUz')
+        self.form_data = {'username': 'testuser',
+                          'password': 'FQ8fgxesdzUz'}
 
     def test_pokemon_page_url(self):
         response = self.client.get('/pokemons/pokemon/1/')
@@ -49,6 +46,48 @@ class PokemonViewTestCase(TestCase):
         self.assertEqual(response.context['team_full'], False)
         self.assertEqual(response.context['moves_full'], False)
         self.assertEqual(response.context['move_names'], [])
+
+    def test_pokemon_view_with_login_set_is_favourite(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        baker.make('pokemons.FavouritePokemon',
+                   pokemon=self.pokemon,
+                   user=self.user)
+        response = self.client.get('/pokemons/pokemon/1/')
+        self.assertEqual(response.context['is_favourite'], True)
+
+    def test_pokemon_view_with_login_not_set_is_favourite(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        response = self.client.get('/pokemons/pokemon/1/')
+        self.assertEqual(response.context['is_favourite'], False)
+
+    def test_pokemon_view_with_login_set_team_full(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        baker.make('pokemons.Team',
+                   6,
+                   user=self.user)
+        response = self.client.get('/pokemons/pokemon/1/')
+        self.assertEqual(response.context['team_full'], True)
+
+    def test_pokemon_view_with_login_not_set_team_full(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        response = self.client.get('/pokemons/pokemon/1/')
+        self.assertEqual(response.context['team_full'], False)
+
+    def test_pokemon_view_with_login_set_moves_full(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        baker.make('pokemons.UserPokemonMoves',
+                   4,
+                   user=self.user,
+                   pokemon=self.pokemon,
+                   make_m2m=True)
+        response = self.client.get('/pokemons/pokemon/1/')
+        self.assertEqual(response.context['moves_full'], True)
+
+
+    def test_pokemon_view_with_login_not_set_moves_full(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        response = self.client.get('/pokemons/pokemon/1/')
+        self.assertEqual(response.context['moves_full'], False)
 
     @patch('pokemons.views.PokemonView.save_in_team')
     def test_pokemon_view_save_in_team_called(self, mock_save_in_team):

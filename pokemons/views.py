@@ -209,7 +209,7 @@ class PokemonView(View):
 
 
 class PokemonTeamView(View, LoginRequiredMixin):
-    """View class displaying information about Pokémon saved in their team by the user."""
+    """View class displaying information about Pokémon saved by the user in their team."""
 
     model = Team
     template_name = 'pokemons/pokemon_team.html'
