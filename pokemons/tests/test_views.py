@@ -5,6 +5,7 @@ from model_bakery import baker
 from unittest.mock import patch
 
 from pokemons.views import PokemonView
+from pokemons.utils import get_missing_number
 
 class HomePageTestCase(TestCase):
 
@@ -108,3 +109,18 @@ class PokemonViewTestCase(TestCase):
     def test_pokemon_view_remove_move_called(self, mock_remove_move):
         PokemonView.remove_move(request=self.client.post('/pokemons/pokemon/1/'), pokemon_id=self.pokemon.pokemon_id)
         mock_remove_move.assert_called()
+
+
+class SaveInTeamTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.existing_numbers = []
+
+    def test_calculate_missing_team_number_no_existing_number(self):
+        missing_number = get_missing_number(set(range(1, 7)), self.existing_numbers)
+        self.assertEqual(missing_number, 1)
+
+    def test_calculate_missing_team_number_multiple_existing_numbers(self):
+        self.existing_numbers = [1, 3]
+        missing_number = get_missing_number(set(range(1, 7)), self.existing_numbers)
+        self.assertEqual(missing_number, 2)
