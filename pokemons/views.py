@@ -208,7 +208,7 @@ class PokemonView(View):
                 return render(request, self.template_name, context)
 
 
-class PokemonTeamView(View, LoginRequiredMixin):
+class PokemonTeamView(LoginRequiredMixin, View):
     """View class displaying information about Pokémon saved by the user in their team."""
 
     model = Team
@@ -277,7 +277,7 @@ class SearchPokemonView(FormView):
         return render(request, self.template_name, context)
 
 
-class FavouritePokemonView(View, LoginRequiredMixin):
+class FavouritePokemonView(LoginRequiredMixin, View):
     """View class displaying Pokémon saved as favourites by the user."""
 
     model = FavouritePokemon
