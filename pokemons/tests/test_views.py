@@ -1,12 +1,12 @@
 from django.contrib.auth.models import User
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 from model_bakery import baker
 from unittest.mock import patch
 
-from pokemons.models import UserPokemonMoves
 from pokemons.views import PokemonView
 from pokemons.utils import get_missing_number
+
 
 class HomePageTestCase(TestCase):
 
@@ -85,7 +85,6 @@ class PokemonViewTestCase(TestCase):
         response = self.client.get('/pokemons/pokemon/1/')
         self.assertEqual(response.context['moves_full'], True)
 
-
     def test_pokemon_view_with_login_not_set_moves_full(self):
         self.client.post(reverse('login'), data=self.form_data)
         response = self.client.get('/pokemons/pokemon/1/')
@@ -98,7 +97,8 @@ class PokemonViewTestCase(TestCase):
 
     @patch('pokemons.views.PokemonView.save_in_favourites')
     def test_pokemon_view_save_in_favourites_called(self, mock_save_in_favourites):
-        PokemonView.save_in_favourites(request=self.client.post('/pokemons/pokemon/1/'), pokemon_id=self.pokemon.pokemon_id)
+        PokemonView.save_in_favourites(request=self.client.post('/pokemons/pokemon/1/'),
+                                       pokemon_id=self.pokemon.pokemon_id)
         mock_save_in_favourites.assert_called()
 
     @patch('pokemons.views.PokemonView.add_move')
@@ -126,6 +126,7 @@ class SaveInTeamTestCase(TestCase):
         missing_number = get_missing_number(set(range(1, 7)), self.existing_numbers)
         self.assertEqual(missing_number, 2)
 
+
 class AddMoveTestCase(TestCase):
 
     def setUp(self) -> None:
@@ -139,3 +140,40 @@ class AddMoveTestCase(TestCase):
         self.existing_numbers = [1, 3, 4]
         missing_number = get_missing_number(set(range(1, 5)), self.existing_numbers)
         self.assertEqual(missing_number, 2)
+
+
+class PokemonTeamViewTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.pokemon = baker.make('pokemons.Pokemon',
+                                  _quantity=1,
+                                  pokemon_type_1='grass',
+                                  pokemon_type_2='')
+        self.user = User.objects.create_user(username='testuser',
+                                             email='testuser@email.com',
+                                             password='FQ8fgxesdzUz')
+        self.team = baker.make('pokemons.Team',
+                               pokemon=self.pokemon,
+                               user=self.user,
+                               pokemon_number=1,
+                               make_m2m=True)
+        self.client.post(reverse('login'), data={'username': 'testuser',
+                                                 'password': 'FQ8fgxesdzUz'})
+
+    def test_team_page_url(self):
+        response = self.client.get('/pokemons/team/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='pokemons/pokemon_team.html')
+
+    def test_team_view_name(self):
+        response = self.client.get(reverse('pokemons:pokemon_team'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='pokemons/pokemon_team.html')
+
+    def test_team_redirect_non_authenticated(self):
+        self.client.get(reverse('logout'))
+        response = self.client.get(reverse('pokemons:pokemon_team'))
+        self.assertRedirects(response,
+                             '/login/?next=/pokemons/team/',
+                             status_code=302,
+                             target_status_code=200)
