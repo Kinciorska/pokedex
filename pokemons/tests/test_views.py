@@ -4,6 +4,7 @@ from django.urls import reverse
 from model_bakery import baker
 from unittest.mock import patch
 
+from pokemons.models import Team
 from pokemons.views import PokemonView
 from pokemons.utils import get_missing_number
 
@@ -177,3 +178,11 @@ class PokemonTeamViewTestCase(TestCase):
                              '/login/?next=/pokemons/team/',
                              status_code=302,
                              target_status_code=200)
+
+    def test_pokemon_deleted_from_team(self):
+        self.client.post('/pokemons/team/', data={'csrfmiddlewaretoken': ['6MH79z7z6ikjc1ZOet6dbyvXnK10QaXA5Bos8QmJQ5mv6H1CstUKeKEy2dxmJTLT'],
+                                                             'pokemon_number': ['1'],
+                                                             'team_form': ['Remove from team']})
+        check_deleted_pokemon_in_team = Team.objects.filter(user=self.user,
+                                                  pokemon_number=1).exists()
+        self.assertFalse(check_deleted_pokemon_in_team)
