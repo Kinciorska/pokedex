@@ -2,10 +2,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from model_bakery import baker
-from unittest.mock import patch
 
-from pokemons.models import Team
-from pokemons.views import PokemonView
+from pokemons.models import Team, FavouritePokemon, UserPokemonMoves
 from pokemons.utils import get_missing_number
 
 
@@ -91,26 +89,57 @@ class PokemonViewTestCase(TestCase):
         response = self.client.get('/pokemons/pokemon/1/')
         self.assertEqual(response.context['moves_full'], False)
 
-    @patch('pokemons.views.PokemonView.save_in_team')
-    def test_pokemon_view_save_in_team_called(self, mock_save_in_team):
-        PokemonView.save_in_team(request=self.client.post('/pokemons/pokemon/1/'), pokemon_id=self.pokemon.pokemon_id)
-        mock_save_in_team.assert_called()
+    def test_pokemon_view_saved_pokemon_in_team(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        self.client.post('/pokemons/pokemon/1/',
+                         id_or_name=1,
+                         data={'csrfmiddlewaretoken': ['test'],
+                               'is_added': ['on'],
+                               'team_form': ['Add to team']})
+        check_added_pokemon_to_team = Team.objects.filter(user=self.user,
+                                                          pokemon_number=1).exists()
+        self.assertTrue(check_added_pokemon_to_team)
 
-    @patch('pokemons.views.PokemonView.save_in_favourites')
-    def test_pokemon_view_save_in_favourites_called(self, mock_save_in_favourites):
-        PokemonView.save_in_favourites(request=self.client.post('/pokemons/pokemon/1/'),
-                                       pokemon_id=self.pokemon.pokemon_id)
-        mock_save_in_favourites.assert_called()
+    def test_pokemon_view_saved_pokemon_in_favourites(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        self.client.post('/pokemons/pokemon/1/',
+                         id_or_name=1,
+                         data={'csrfmiddlewaretoken': ['test'],
+                               'is_added': ['on'],
+                               'favourite_form': ['Add to favourites']})
+        check_added_pokemon_to_favourites = FavouritePokemon.objects.filter(user=self.user,
+                                                                            pokemon=self.pokemon).exists()
+        self.assertTrue(check_added_pokemon_to_favourites)
 
-    @patch('pokemons.views.PokemonView.add_move')
-    def test_pokemon_view_add_move_called(self, mock_add_move):
-        PokemonView.add_move(request=self.client.post('/pokemons/pokemon/1/'), pokemon_id=self.pokemon.pokemon_id)
-        mock_add_move.assert_called()
+    def test_pokemon_view_move_added(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        self.client.post('/pokemons/pokemon/1/',
+                         id_or_name=1,
+                         data={'csrfmiddlewaretoken': ['test'],
+                               'move_name': ['cut'],
+                               'add_move_form': ['Choose this move']})
+        check_move_added = UserPokemonMoves.objects.filter(user=self.user,
+                                                           pokemon=self.pokemon,
+                                                           move_number=1).exists()
+        self.assertTrue(check_move_added)
 
-    @patch('pokemons.views.PokemonView.remove_move')
-    def test_pokemon_view_remove_move_called(self, mock_remove_move):
-        PokemonView.remove_move(request=self.client.post('/pokemons/pokemon/1/'), pokemon_id=self.pokemon.pokemon_id)
-        mock_remove_move.assert_called()
+    def test_pokemon_view_move_removed(self):
+        self.client.post(reverse('login'), data=self.form_data)
+        move = baker.make('pokemons.Move',
+                          move_name='cut')
+        baker.make('pokemons.UserPokemonMoves',
+                   user=self.user,
+                   pokemon=self.pokemon,
+                   move=move)
+        self.client.post('/pokemons/pokemon/1/',
+                         id_or_name=1,
+                         data={'csrfmiddlewaretoken': ['test'],
+                               'move_name': ['cut'],
+                               'remove_move_form': ['Remove this move']})
+        check_move_removed = UserPokemonMoves.objects.filter(user=self.user,
+                                                             pokemon=self.pokemon,
+                                                             move=move).exists()
+        self.assertFalse(check_move_removed)
 
 
 class SaveInTeamTestCase(TestCase):
@@ -180,9 +209,9 @@ class PokemonTeamViewTestCase(TestCase):
                              target_status_code=200)
 
     def test_pokemon_deleted_from_team(self):
-        self.client.post('/pokemons/team/', data={'csrfmiddlewaretoken': ['6MH79z7z6ikjc1ZOet6dbyvXnK10QaXA5Bos8QmJQ5mv6H1CstUKeKEy2dxmJTLT'],
-                                                             'pokemon_number': ['1'],
-                                                             'team_form': ['Remove from team']})
+        self.client.post('/pokemons/team/', data={'csrfmiddlewaretoken': ['test'],
+                                                  'pokemon_number': ['1'],
+                                                  'team_form': ['Remove from team']})
         check_deleted_pokemon_in_team = Team.objects.filter(user=self.user,
-                                                  pokemon_number=1).exists()
+                                                            pokemon_number=1).exists()
         self.assertFalse(check_deleted_pokemon_in_team)
