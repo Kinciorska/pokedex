@@ -215,3 +215,22 @@ class PokemonTeamViewTestCase(TestCase):
         check_deleted_pokemon_in_team = Team.objects.filter(user=self.user,
                                                             pokemon_number=1).exists()
         self.assertFalse(check_deleted_pokemon_in_team)
+
+
+class SearchPokemonViewTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.pokemon = baker.make('pokemons.Pokemon',
+                                  pokemon_id=1)
+
+    def test_search_page_url(self):
+        response = self.client.get('/pokemons/search/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='pokemons/search.html')
+
+    def test_search_page_view_name(self):
+        response = self.client.get(reverse('pokemons:search_pokemon'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='pokemons/search.html')
+
+
