@@ -44,37 +44,42 @@ class PokemonView(View):
     def get(self, request, id_or_name):
         """Returns information about a Pokémon and the forms to assign and un-assign moves, add to team and add to favourites."""
 
-        url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
-        pokemon = requests.get(url).json()
-        is_favourite = False
-        team_full = False
-        moves_full = False
-        move_names = []
+        try:
+            url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
+            pokemon = requests.get(url).json()
+            is_favourite = False
+            team_full = False
+            moves_full = False
+            move_names = []
 
-        if request.user.is_authenticated:
-            user = request.user
-            pokemon_id = pokemon['id']
-            pokemon_object = self.model.objects.get(pokemon_id=pokemon_id)
-            pokemon_pk = getattr(pokemon_object, 'id')
-            is_favourite = FavouritePokemon.objects.filter(pokemon=pokemon_object, user=user).exists()
-            team_full = Team.objects.filter(user=user).count() == 6
-            moves_full = UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).count() == 4
-            move_names = self.get_chosen_moves_list(user, pokemon_object)
+            if request.user.is_authenticated:
+                user = request.user
+                pokemon_id = pokemon['id']
+                pokemon_object = self.model.objects.get(pokemon_id=pokemon_id)
+                pokemon_pk = getattr(pokemon_object, 'id')
+                is_favourite = FavouritePokemon.objects.filter(pokemon=pokemon_object, user=user).exists()
+                team_full = Team.objects.filter(user=user).count() == 6
+                moves_full = UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).count() == 4
+                move_names = self.get_chosen_moves_list(user, pokemon_object)
 
-        context = {'pokemon': pokemon,
-                   'pokemon_types_list': pokemon['types'],
-                   'pokemon_abilities_list': pokemon['abilities'],
-                   'pokemon_moves_list': pokemon['moves'],
-                   'move_names': move_names,
-                   'is_favourite': is_favourite,
-                   'team_full': team_full,
-                   'moves_full': moves_full,
-                   'team_form': AddToTeamForm,
-                   'favourite_form': AddToFavouritesForm,
-                   'add_move_form': AddMoveForm,
-                   'remove_move_form': RemoveMoveForm,
-                   }
-        return render(request, self.template_name, context)
+            context = {'pokemon': pokemon,
+                       'pokemon_types_list': pokemon['types'],
+                       'pokemon_abilities_list': pokemon['abilities'],
+                       'pokemon_moves_list': pokemon['moves'],
+                       'move_names': move_names,
+                       'is_favourite': is_favourite,
+                       'team_full': team_full,
+                       'moves_full': moves_full,
+                       'team_form': AddToTeamForm,
+                       'favourite_form': AddToFavouritesForm,
+                       'add_move_form': AddMoveForm,
+                       'remove_move_form': RemoveMoveForm,
+                       }
+            return render(request, self.template_name, context)
+
+        except requests.JSONDecodeError:
+            messages.error(request, "No Pokémon found. Check the spelling and try again.")
+            return redirect('pokemons:home')
 
     @method_decorator(login_required(login_url='/website/login/'))
     def save_in_team(self, request, pokemon_id):
