@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 from model_bakery import baker
@@ -233,4 +234,16 @@ class SearchPokemonViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='pokemons/search.html')
 
+    def test_valid_pokemon_search(self):
+        response = self.client.post(reverse('pokemons:search_pokemon'), data={'id_or_name': 1})
+        self.assertRedirects(response,
+                             '/pokemons/pokemon/1/',
+                             status_code=302,
+                             target_status_code=200)
 
+    def test_invalid_pokemon_search(self):
+        response = self.client.post(reverse('pokemons:search_pokemon'), data={'id_or_name': 'invalid_data'}, follow=True)
+        self.assertRedirects(response,
+                             '/pokemons/home/',
+                             status_code=302,
+                             target_status_code=200)
