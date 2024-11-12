@@ -247,3 +247,23 @@ class SearchPokemonViewTestCase(TestCase):
                              '/pokemons/home/',
                              status_code=302,
                              target_status_code=200)
+
+
+class FavouritePokemonViewTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(username='testuser',
+                                             email='testuser@email.com',
+                                             password='FQ8fgxesdzUz')
+        self.client.post(reverse('login'), data={'username': 'testuser',
+                                                 'password': 'FQ8fgxesdzUz'})
+
+    def test_favourite_pokemon_page_url(self):
+        response = self.client.get('/pokemons/favourites/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='pokemons/favourite_pokemon.html')
+
+    def test_favourite_pokemon_page_view_name(self):
+        response = self.client.get(reverse('pokemons:favourite_pokemon'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='pokemons/favourite_pokemon.html')
