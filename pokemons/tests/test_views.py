@@ -267,3 +267,15 @@ class FavouritePokemonViewTestCase(TestCase):
         response = self.client.get(reverse('pokemons:favourite_pokemon'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='pokemons/favourite_pokemon.html')
+
+    def test_remove_favourite_pokemon(self):
+        pokemon = baker.make('pokemons.Pokemon',
+                             pokemon_id=1)
+        baker.make('pokemons.FavouritePokemon',
+                   user=self.user,
+                   pokemon=pokemon)
+        response = self.client.post(reverse('pokemons:favourite_pokemon'), data={'pokemon_id': 1})
+        self.assertEqual(response.status_code, 302)
+        check_pokemon_in_favourites = FavouritePokemon.objects.filter(user=self.user,
+                                                                      pokemon=pokemon).exists()
+        self.assertFalse(check_pokemon_in_favourites)
