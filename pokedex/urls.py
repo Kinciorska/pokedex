@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
+from django.conf import settings
+from django.conf.urls.static import static
 
 from website.views import HomePageView, RegisterView, LoginView, LogoutView, UserViewSet, GroupViewSet
 from pokemons.views import PokemonViewSet, FavouritePokemonViewSet, TeamMovesList, MoveViewSet, \
@@ -41,3 +43,6 @@ urlpatterns = [
     path('pokemon_moves_list/', UserPokemonMovesList.as_view(), name='pokemon_moves'),
     path('team/', TeamMovesList.as_view(), name='team'),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)

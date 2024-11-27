@@ -9,6 +9,8 @@ from django.views.generic.base import TemplateView
 from rest_framework import viewsets
 from rest_framework import permissions
 
+from pokedex.settings import logger
+
 from .forms import NewUserForm
 from .serializers import UserSerializer, GroupSerializer
 

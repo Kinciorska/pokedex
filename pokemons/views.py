@@ -25,6 +25,7 @@ from .forms import SearchPokemonForm, AddToTeamForm, RemoveFromTeamForm, AddToFa
 from .models import Pokemon, FavouritePokemon, Team, Move, UserPokemonMoves
 from .serializers import PokemonSerializer, TeamSerializer, PokemonMovesSerializer, FavouritePokemonSerializer, \
     MoveSerializer
+from pokedex.settings import logger
 
 
 class HomePageView(ListView):
