@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from django.views.generic.base import TemplateView
+from requests import RequestException
 
 from rest_framework import permissions, viewsets
 from rest_framework.views import APIView
@@ -79,6 +80,7 @@ class PokemonView(View):
             return render(request, self.template_name, context)
 
         except requests.JSONDecodeError:
+            logger.error(f"No pokemon found: {id_or_name}")
             messages.error(request, "No Pokémon found. Check the spelling and try again.")
             return redirect('pokemons:home')
 
@@ -256,9 +258,13 @@ class PokemonTeamView(LoginRequiredMixin, View):
         """Removes the given Pokémon from the user's team."""
 
         pokemon_number = int(request.POST.get('pokemon_number'))
-        team_pk = self.model.objects.get(user=request.user, pokemon_number=pokemon_number)
-        team_pk.delete()
-        return redirect('pokemons:pokemon_team')
+        try:
+            team_pk = self.model.objects.get(user=request.user, pokemon_number=pokemon_number)
+            team_pk.delete()
+            return redirect('pokemons:pokemon_team')
+        except ObjectDoesNotExist:
+            logger.error(f"Pokemon with number {pokemon_number} not found during delete")
+            return redirect('pokemons:home')
 
 
 class SearchPokemonView(FormView):
@@ -350,13 +356,18 @@ class MovesView(View):
     paginate_by = 30
 
     def get(self, request):
-        move_list_url = urljoin(POKE_API_ENDPOINT + MOVES, '?limit=-1')
-        move_list_json = requests.get(move_list_url).json()
-        move_list = move_list_json['results']
-        pokemon_paginator = Paginator(move_list, self.paginate_by)
-        page_number = request.GET.get("page")
-        page_obj = pokemon_paginator.get_page(page_number)
-        return render(request, self.template_name, {"page_obj": page_obj})
+        url = urljoin(POKE_API_ENDPOINT + MOVES, '?limit=-1')
+        try:
+            move_list_json = requests.get(url).json()
+            move_list = move_list_json['results']
+            pokemon_paginator = Paginator(move_list, self.paginate_by)
+            page_number = request.GET.get("page")
+            page_obj = pokemon_paginator.get_page(page_number)
+            return render(request, self.template_name, {"page_obj": page_obj})
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch data from {url}: {e}")
+            return HttpResponseServerError("An error occurred during the request.")
 
 
 class MoveDetailView(View):
@@ -366,16 +377,20 @@ class MoveDetailView(View):
 
     def get(self, request, id_or_name):
         url = urljoin(POKE_API_ENDPOINT + MOVES, id_or_name)
-        pokemon_move = requests.get(url).json()
-        context = {'name': pokemon_move['name'],
-                   'accuracy': pokemon_move['accuracy'],
-                   'power': pokemon_move['power'],
-                   'pp': pokemon_move['pp'],
-                   'type': pokemon_move['type'],
-                   'class': pokemon_move['damage_class'],
-                   'flavor_text_list': pokemon_move['flavor_text_entries'],
-                   }
-        return render(request, self.template_name, context)
+        try:
+            pokemon_move = requests.get(url).json()
+            context = {'name': pokemon_move['name'],
+                       'accuracy': pokemon_move['accuracy'],
+                       'power': pokemon_move['power'],
+                       'pp': pokemon_move['pp'],
+                       'type': pokemon_move['type'],
+                       'class': pokemon_move['damage_class'],
+                       'flavor_text_list': pokemon_move['flavor_text_entries'],
+                       }
+            return render(request, self.template_name, context)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch data from {url}: {e}")
+            return HttpResponseServerError("An error occurred during the request.")
 
 
 class MoveViewSet(viewsets.ModelViewSet):
@@ -407,18 +422,23 @@ class PokemonTypeDetailView(TemplateView):
 
     def get_context_data(self, id_or_name, **kwargs):
         url = urljoin(POKE_API_ENDPOINT + TYPES, id_or_name)
-        pokemon_types = requests.get(url).json()
-        context = super().get_context_data(**kwargs)
-        context['type_name'] = pokemon_types['name']
-        context['pokemons_in_type'] = pokemon_types['pokemon']
-        context['moves_in_type'] = pokemon_types['moves']
-        context['double_damage_from'] = pokemon_types['damage_relations']['double_damage_from']
-        context['double_damage_to'] = pokemon_types['damage_relations']['double_damage_to']
-        context['half_damage_from'] = pokemon_types['damage_relations']['half_damage_from']
-        context['half_damage_to'] = pokemon_types['damage_relations']['half_damage_to']
-        context['no_damage_from'] = pokemon_types['damage_relations']['no_damage_from']
-        context['no_damage_to'] = pokemon_types['damage_relations']['no_damage_to']
-        return context
+        try:
+            pokemon_types = requests.get(url).json()
+            context = super().get_context_data(**kwargs)
+            context['type_name'] = pokemon_types['name']
+            context['pokemons_in_type'] = pokemon_types['pokemon']
+            context['moves_in_type'] = pokemon_types['moves']
+            context['double_damage_from'] = pokemon_types['damage_relations']['double_damage_from']
+            context['double_damage_to'] = pokemon_types['damage_relations']['double_damage_to']
+            context['half_damage_from'] = pokemon_types['damage_relations']['half_damage_from']
+            context['half_damage_to'] = pokemon_types['damage_relations']['half_damage_to']
+            context['no_damage_from'] = pokemon_types['damage_relations']['no_damage_from']
+            context['no_damage_to'] = pokemon_types['damage_relations']['no_damage_to']
+            return context
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch data from {url}: {e}")
+            return HttpResponseServerError("An error occurred during the request.")
 
 
 class PokemonTypesView(TemplateView):
@@ -428,7 +448,12 @@ class PokemonTypesView(TemplateView):
 
     def get_context_data(self, **kwargs):
         url = urljoin(POKE_API_ENDPOINT, TYPES)
-        pokemon_types = requests.get(url).json()
-        context = super().get_context_data(**kwargs)
-        context['type_list'] = pokemon_types['results']
-        return context
+        try:
+            pokemon_types = requests.get(url).json()
+            context = super().get_context_data(**kwargs)
+            context['type_list'] = pokemon_types['results']
+            return context
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch data from {url}: {e}")
+            return HttpResponseServerError("An error occurred during the request.")
