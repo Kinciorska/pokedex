@@ -32,6 +32,7 @@ class RegisterView(View):
         form = self.form_class(request.POST)
         if form.is_valid():
             user = form.save()
+            logger.info(f"User {user} registered.")
             login(request, user)
             messages.success(request, "Registration successful.")
             return redirect("home")
@@ -58,6 +59,7 @@ class LoginView(View):
             user = authenticate(username=username, password=password)
             if user is None:
                 messages.error(request, "Invalid username or password")
+                logger.error(f"Invalid user {username}")
             else:
                 login(request, user)
                 messages.info(request, f"You are now logged in as {username}.")
