@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django.contrib.auth.decorators import login_required
@@ -47,42 +48,66 @@ class PokemonView(View):
         """Returns information about a Pokémon and the forms to assign and un-assign moves, add to team and add to favourites."""
 
         try:
-            url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
-            pokemon = requests.get(url).json()
-            is_favourite = False
-            team_full = False
-            moves_full = False
-            move_names = []
+            pokemon = self._fetch_pokemon(id_or_name)
 
-            if request.user.is_authenticated:
-                user = request.user
-                pokemon_id = pokemon['id']
-                pokemon_object = self.model.objects.get(pokemon_id=pokemon_id)
-                pokemon_pk = getattr(pokemon_object, 'id')
-                is_favourite = FavouritePokemon.objects.filter(pokemon=pokemon_object, user=user).exists()
-                team_full = Team.objects.filter(user=user).count() == 6
-                moves_full = UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).count() == 4
-                move_names = self.get_chosen_moves_list(user, pokemon_object)
+            if not pokemon:
+                messages.error(request, "No Pokémon found.")
+                return redirect('pokemons:home')
+
+            pokemon = pokemon.json()
 
             context = {'pokemon': pokemon,
                        'pokemon_types_list': pokemon['types'],
                        'pokemon_abilities_list': pokemon['abilities'],
                        'pokemon_moves_list': pokemon['moves'],
-                       'move_names': move_names,
-                       'is_favourite': is_favourite,
-                       'team_full': team_full,
-                       'moves_full': moves_full,
                        'team_form': AddToTeamForm,
                        'favourite_form': AddToFavouritesForm,
                        'add_move_form': AddMoveForm,
                        'remove_move_form': RemoveMoveForm,
-                       }
+                       'is_favourite': False,
+                       'team_full': False,
+                       'moves_full': False,
+                       'move_names': []}
+
+            user_context = self._get_user_context(request, pokemon['id']) if request.user.is_authenticated else {}
+            context.update(user_context)
+
             return render(request, self.template_name, context)
 
-        except requests.JSONDecodeError:
-            logger.error(f"No pokemon found: {id_or_name}")
+        except requests.JSONDecodeError as e:
+
+            logger.error(f"Error {e} with Pokémon {id_or_name}")
             messages.error(request, "No Pokémon found. Check the spelling and try again.")
+
             return redirect('pokemons:home')
+
+    @staticmethod
+    def _fetch_pokemon(id_or_name):
+        """Fetches Pokémon data from the API by ID or name."""
+        url = urljoin(POKE_API_ENDPOINT + POKEMON, id_or_name)
+        try:
+            response = requests.get(url)
+            return response
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch data from {url}: {e}")
+            return None
+
+    def _get_user_context(self, request, pokemon_id):
+        user = request.user
+
+        try:
+            pokemon_object = self.model.objects.get(pokemon_id=pokemon_id)
+            pokemon_pk = getattr(pokemon_object, 'id')
+
+            return {'is_favourite': FavouritePokemon.objects.filter(pokemon=pokemon_object, user=user).exists(),
+                    'team_full': Team.objects.filter(user=user).count() >= 6,
+                    'moves_full': UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).count() >= 4,
+                    'move_names': self.get_chosen_moves_list(user, pokemon_object)}
+
+        except self.model.DoesNotExist:
+            logger.warning(f"Pokémon with ID {pokemon_id} not found in the database.")
+            return {}
 
     @method_decorator(login_required(login_url='/website/login/'))
     def save_in_team(self, request, pokemon_id):
