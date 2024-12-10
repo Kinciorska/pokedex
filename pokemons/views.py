@@ -1,24 +1,23 @@
 import requests
 
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.paginator import Paginator
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseServerError
-from django.views.generic.edit import FormView
-from django.views.generic.list import ListView
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.http import HttpResponseServerError
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from django.views.generic.base import TemplateView
-from requests import RequestException
-
+from django.views.generic.edit import FormView
+from django.views.generic.list import ListView
 from rest_framework import permissions, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
-
+from requests import RequestException
 from urllib.parse import urljoin
 
 from .utils import get_pokemon_id, get_move_details, get_missing_number, POKE_API_ENDPOINT, POKEMON, MOVES, TYPES
@@ -106,25 +105,33 @@ class PokemonView(View):
                     'move_names': self.get_chosen_moves_list(user, pokemon_object)}
 
         except self.model.DoesNotExist:
-            logger.warning(f"Pokémon with ID {pokemon_id} not found in the database.")
+            logger.error(f"Pokémon with ID {pokemon_id} not found in the database.")
             return {}
 
     @method_decorator(login_required(login_url='/website/login/'))
-    def save_in_team(self, request, pokemon_id):
+    def _save_in_team(self, request, pokemon_id):
         """Saves the given Pokémon in the team of the user, if there are 6 Pokémon already, it returns an error."""
 
         user = request.user
-        existing_numbers = Team.objects.filter(user=user).values_list('pokemon_number', flat=True)
+        try:
+            with transaction.atomic():
+                existing_numbers = Team.objects.filter(user=user).values_list('pokemon_number', flat=True)
 
-        if existing_numbers.count() == 6:
-            messages.error(request, "There are already 6 Pokémon in your team")
-            return
-        missing_number = get_missing_number(numbers=set(range(1, 7)), existing_numbers=existing_numbers)
-        team = Team(user=user, pokemon_number=missing_number)
-        team.save()
-        pokemon = self.model.objects.get(pokemon_id=pokemon_id)
-        team.pokemon.add(pokemon)
-        return
+                if existing_numbers.count() == 6:
+                    messages.error(request, "There are already 6 Pokémon in your team")
+                    return
+
+                missing_number = get_missing_number(numbers=set(range(1, 7)), existing_numbers=existing_numbers)
+                team = Team.objects.create(user=user, pokemon_number=missing_number)
+                pokemon = self.model.objects.get(pokemon_id=pokemon_id)
+                team.pokemon.add(pokemon)
+                return
+
+        except ObjectDoesNotExist:
+            logger.error(f"Error saving Pokémon with ID {pokemon_id} to team")
+            messages.error(request, "Error saving Pokémon to your team.")
+            return redirect('pokemons:home')
+
 
     @staticmethod
     def save_in_favourites(request, pokemon_id):
@@ -210,7 +217,7 @@ class PokemonView(View):
 
             case 'team_form' if AddToTeamForm(request.POST).is_valid():
                 pokemon_id = get_pokemon_id(id_or_name)
-                self.save_in_team(request, pokemon_id)
+                self._save_in_team(request, pokemon_id)
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
             case 'favourite_form' if AddToTeamForm(request.POST).is_valid():
