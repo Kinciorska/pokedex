@@ -132,12 +132,16 @@ class PokemonView(View):
             messages.error(request, "Error saving Pokémon to your team.")
             return redirect('pokemons:home')
 
-
     @staticmethod
-    def save_in_favourites(request, pokemon_id):
+    def _save_in_favourites(request, pokemon_id):
         """Saves the given Pokémon as favourite for the user."""
 
         pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+
+        if FavouritePokemon.objects.filter(user=request.user, pokemon=pokemon).exists():
+            messages.info(request, "Pokémon already saved to favourites.")
+            return
+
         pokemon_in_favourites = FavouritePokemon(user=request.user, pokemon=pokemon)
         pokemon_in_favourites.save()
         return
@@ -222,7 +226,7 @@ class PokemonView(View):
 
             case 'favourite_form' if AddToTeamForm(request.POST).is_valid():
                 pokemon_id = get_pokemon_id(id_or_name)
-                self.save_in_favourites(request, pokemon_id)
+                self._save_in_favourites(request, pokemon_id)
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
             case 'add_move_form':
