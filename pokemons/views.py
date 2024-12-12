@@ -102,7 +102,7 @@ class PokemonView(View):
             return {'is_favourite': FavouritePokemon.objects.filter(pokemon=pokemon_object, user=user).exists(),
                     'team_full': Team.objects.filter(user=user).count() >= 6,
                     'moves_full': UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).count() >= 4,
-                    'move_names': self.get_chosen_moves_list(user, pokemon_object)}
+                    'move_names': self._get_chosen_moves_list(user, pokemon_object)}
 
         except self.model.DoesNotExist:
             logger.error(f"Pokémon with ID {pokemon_id} not found in the database.")
@@ -165,14 +165,15 @@ class PokemonView(View):
                 return
 
     @staticmethod
-    def get_chosen_moves_list(user, pokemon_pk):
+    def _get_chosen_moves_list(user, pokemon_pk):
         """Returns the list of moves assigned to a Pokémon."""
 
-        move_numbers = UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk).values_list('move_id',
-                                                                                                     flat=True)
-        move_names_query = Move.objects.filter(pk__in=move_numbers).all()
-        move_names = [str(name) for name in move_names_query]
-        return move_names
+        moves = (
+            UserPokemonMoves.objects.filter(user=user, pokemon_id=pokemon_pk)
+            .select_related('move')
+        )
+
+        return [move.move.move_name for move in moves]
 
     @method_decorator(login_required(login_url='/website/login/'))
     def add_move(self, request, pokemon_id):
