@@ -24,15 +24,20 @@ def get_pokemon_id(id_or_name):
     pokemon_id = pokemon['id']
     return pokemon_id
 
-
 def get_move_details(move_name):
-    """Returns the move  id and type fetched from the PokéAPI."""
+    """Returns the move id and type fetched from the PokéAPI."""
 
     url = urljoin(POKE_API_ENDPOINT + MOVES, move_name)
-    move = requests.get(url).json()
-    id = move['id']
-    type = move['type']['name']
-    return id, type
+
+    try:
+        move = requests.get(url).json()
+        id = move['id']
+        type = move['type']['name']
+        return id, type
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to fetch move data from {url}: {e}")
+        return None, None
 
 def get_missing_number(numbers, existing_numbers):
     """Returns the first missing number from a set of numbers."""
