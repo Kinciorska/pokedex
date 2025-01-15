@@ -205,15 +205,37 @@ class PokemonView(View):
         return
 
     @method_decorator(login_required(login_url='/website/login/'))
-    def remove_move(self, request, pokemon_id):
+    def _remove_move(self, request, pokemon_id):
         """Removes a move from a specified Pokémon."""
 
-        pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
         move_name = request.POST['move_name']
-        move = get_object_or_404(Move, move_name=move_name)
-        pokemon_move = UserPokemonMoves.objects.get(user=request.user, pokemon=pokemon, move=move)
-        pokemon_move.delete()
-        return
+
+        try:
+            pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+            move = get_object_or_404(Move, move_name=move_name)
+            pokemon_move = UserPokemonMoves.objects.get(user=request.user, pokemon=pokemon, move=move)
+            pokemon_move.delete()
+            return
+
+        except Pokemon.DoesNotExist:
+            logger.error(f"Removing move {move_name} failed, Pokémon with id {pokemon_id} does not exist")
+            messages.error(request, "The Pokémon you are trying to modify does not exist.")
+
+            return
+
+        except Move.DoesNotExist:
+            logger.error(f"Removing move {move_name} failed, move {move_name} does not exist")
+            messages.error(request, "The move you are trying to modify does not exist.")
+
+            return
+
+        except UserPokemonMoves.DoesNotExist:
+            logger.error(f"Removing move {move_name} failed, UserPokemonMove object with pokemon id {pokemon_id} "
+                         f"and move {pokemon_move} does not exist.")
+            messages.error(request, "The specified move is not associated with this Pokémon.")
+
+            return
+
 
     @method_decorator(login_required(login_url='/website/login/'))
     def post(self, request, id_or_name):
@@ -244,7 +266,7 @@ class PokemonView(View):
 
             case 'remove_move_form':
                 pokemon_id = get_pokemon_id(id_or_name)
-                self.remove_move(request, pokemon_id)
+                self._remove_move(request, pokemon_id)
                 return redirect('pokemons:pokemon_detail', pokemon_id)
 
             case [_]:
