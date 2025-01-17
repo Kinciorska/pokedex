@@ -289,16 +289,16 @@ class PokemonTeamView(LoginRequiredMixin, View):
     template_name = 'pokemons/pokemon_team.html'
 
     @staticmethod
-    def get_move(user, pokemon_pk, move_number):
+    def _get_move(user, pokemon_pk, move_number, default=''):
         """
         Returns the name of the move of the given Pokémon, if no move is assigned to it returns an empty string.
         """
         try:
             pokemon_move = UserPokemonMoves.objects.get(user=user, pokemon_id=pokemon_pk, move_number=move_number)
-            move = pokemon_move.move
+            return pokemon_move.move
+
         except ObjectDoesNotExist:
-            move = ''
-        return move
+            return default
 
     def get(self, request):
         """Returns the number, name, types and moves of Pokémon saved in the user's team."""
@@ -312,10 +312,10 @@ class PokemonTeamView(LoginRequiredMixin, View):
             'pokemon_name_list': [getattr(Pokemon.objects.get(id=pk), 'pokemon_name') for pk in pokemon_pk_list],
             'pokemon_type_1_list': [getattr(Pokemon.objects.get(id=pk), 'pokemon_type_1') for pk in pokemon_pk_list],
             'pokemon_type_2_list': [getattr(Pokemon.objects.get(id=pk), 'pokemon_type_2') for pk in pokemon_pk_list],
-            'pokemon_move1_list': [self.get_move(user, pokemon_pk, 1) for pokemon_pk in pokemon_pk_list],
-            'pokemon_move2_list': [self.get_move(user, pokemon_pk, 2) for pokemon_pk in pokemon_pk_list],
-            'pokemon_move3_list': [self.get_move(user, pokemon_pk, 3) for pokemon_pk in pokemon_pk_list],
-            'pokemon_move4_list': [self.get_move(user, pokemon_pk, 4) for pokemon_pk in pokemon_pk_list],
+            'pokemon_move1_list': [self._get_move(user, pokemon_pk, 1) for pokemon_pk in pokemon_pk_list],
+            'pokemon_move2_list': [self._get_move(user, pokemon_pk, 2) for pokemon_pk in pokemon_pk_list],
+            'pokemon_move3_list': [self._get_move(user, pokemon_pk, 3) for pokemon_pk in pokemon_pk_list],
+            'pokemon_move4_list': [self._get_move(user, pokemon_pk, 4) for pokemon_pk in pokemon_pk_list],
             'team_form': RemoveFromTeamForm,
         }
         return render(request, self.template_name, context)
